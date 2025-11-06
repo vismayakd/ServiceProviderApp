@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        background-image: url("{% static 'images/background.jpg' %}");
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-attachment: fixed;
+        color: #fff;
+        font-family: "Poppins", sans-serif;
+    }
+
+    .navbar,
+    .footer {
+        background-color: rgb(74, 2, 26);
+    }
+
+
+    .landing_page {
+        min-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 80px 20px 40px;
+       
+    }
+
+    .landing_page h1,
+    .landing_page p {
+        color: #fff;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    .special-container {
+        border-radius: 20px;
+       
+        color: #222;
+    }
+
+    .special-container .col-md-4 {
+        flex: 1;
+        max-width: 300px;
+        padding: 35px 20px;
+        background: rgba(255, 211, 211, 0.9);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        transition: all 0.4s ease;
+        cursor: pointer;
+        text-align: center;
+    }
+
+    .special-container i {
+        font-size: 2.5rem;
+        display: block;
+        margin-bottom: 15px;
+        transition: transform 0.4s ease, color 0.4s ease;
+    }
+
+   
+    .special-container .col-md-4:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        background: rgba(255, 255, 255, 1);
+    }
+
+    .special-container .col-md-4:hover i {
+        transform: scale(1.1);
+        color: #0d6efd;
+    }
+
+    .special-container h5,
+    .special-container p {
+        transition: color 0.4s ease;
+    }
+
+    .special-container .col-md-4:hover h5 {
+        color: #0d6efd;
+    }
+
+    .special-container .col-md-4:hover p {
+        color: rgb(74, 2, 26);
+    }
+
+
+    .info-section {
+        color: #222;
+        border-radius: 20px;
+        padding: 60px 20px;
+        margin-top: 5rem;
+    }
+
+    .hover-card {
+        transition: transform 0.3s ease box-shadow 0.3s ease;
+        border-radius: 15px;
+    }
+
+    .hover-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    footer.footer {
+        color: white;
+        text-align: center;
+        padding: 16px;
+    }
+
+    footer.footer a {
+        color: #fff;
+        margin: 0 10px;
+        text-decoration: none;
+    }
+
+    footer.footer a:hover {
+        text-decoration: underline;
+    }
+
+    @keyframes fadeUp {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <div class="container ms-2">
+        <a class="navbar-brand fw-bold" href="{% url 'home' %}">
+            <img src="{% static 'images/logo.jpg' %}" class="rounded" alt="Logo" style="width: 50px; height: 50px;">
+            ServiceConnect
+        </a>
+        <div>
+            <a class="nav-link d-inline text-white" href="{% url 'add_company' %}">
+                Register Your Company
+            </a>
+        </div>
+    </div>
+</nav>
+
+<main>
+    <h3 class="animated-heading text-center mt-4">Book a trusted technician for your home or office services</h3>
+
+    <div class="landing_page">
+      
+        <h1 class="fw-bold m-0">Welcome to ServiceConnect</h1>
+        <p class="fs-5 mb-4">Find trusted technicians from reliable companies — quick, easy, and secure.</p>
+        <div>
+            <a href="{% url 'add_customer' %}" class="btn btn-primary me-2 px-4 py-2">Register</a>
+            <a href="{% url 'login' %}" class="btn btn-success px-4 py-2">Login</a>
+        </div>
+    </div>
+
+    <div class="container special-container text-center">
+        <div class="row d-flex justify-content-center g-4">
+            <div class="col-md-4 me-2">
+                <div class="overlay"></div>
+                <div class="content">
+                    <i class="bi bi-briefcase text-primary"></i>
+                    <h5 class="mt-2">Trusted Companies</h5>
+                    <p>Partnered with top-rated companies to ensure quality and reliability.</p>
+                </div>
+            </div>
+
+            <div class="col-md-4 me-2">
+                <div class="overlay"></div>
+                <div class="content">
+                    <i class="bi bi-gear text-success"></i>
+                    <h5 class="mt-2">Skilled Technicians</h5>
+                    <p>All technicians are verified and experienced to handle your requests efficiently.</p>
+                </div>
+            </div>
+
+            <div class="col-md-4 me-2">
+                <div class="overlay"></div>
+                <div class="content">
+                    <i class="bi bi-clock text-warning"></i>
+                    <h5 class="mt-2">Quick Response</h5>
+                    <p>Our system ensures your service requests are processed instantly.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-section container text-center">
+        <h2 class="fw-bold mb-5 text-dark">How It Works</h2>
+        <div class="row justify-content-center">
+            <div class="col-md-3 mb-4">
+                <div class="card border-0 h-100 shadow-sm hover-card">
+                    <div class="card-body">
+                        <i class="bi bi-person-plus display-4 text-primary mb-3"></i>
+                        <h5 class="fw-bold">1. Register</h5>
+                        <p>Create your free account and start exploring available services.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card border-0 h-100 shadow-sm hover-card">
+                    <div class="card-body">
+                        <i class="bi bi-building display-4 mb-3"></i>
+                        <h5 class="fw-bold">2. Choose Company</h5>
+                        <p>Select from verified companies offering professional technicians.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card border-0 h-100 shadow-sm hover-card">
+                    <div class="card-body">
+                        <i class="bi bi-tools display-4  mb-3"></i>
+                        <h5 class="fw-bold">3. Choose Service</h5>
+                        <p>Pick the service you need — plumbing, electrical, cleaning, or appliance repair.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card border-0 h-100 shadow-sm hover-card">
+                    <div class="card-body">
+                        <i class="bi bi-send-check display-4 text-primary mb-3"></i>
+                        <h5 class="fw-bold">4. Request</h5>
+                        <p>Submit your service request and get matched with a technician instantly!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="footer mt-5">
+    <p>© 2025 ServiceConnect | All Rights Reserved</p>
+    <p>Email: info@serviceconnect.com | Phone: +91 9999999999</p>
+    <div>
+        <a href="#"><i class="bi bi-facebook"></i></a>
+        <a href="#"><i class="bi bi-instagram"></i></a>
+        <a href="#"><i class="bi bi-linkedin"></i></a>
+    </div>
+</footer>
+{% endblock %}

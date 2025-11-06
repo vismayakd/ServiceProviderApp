@@ -1,0 +1,32 @@
+{% extends 'company_base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<div class="container mt-4 w-50">
+    <div class="card shadow rounded-4 p-4">
+        <h3>{% if form.instance.pk %}Edit Technician{% else %}Add Technician{% endif %}</h3>
+        <form method="POST" autocomplete="off">
+            {% csrf_token %}
+            <label>Name</label>
+            <input type="text" name="name" class="form-control"required><br>
+            <label>Email</label>
+            <input type="email" name="email" class="form-control" required><br>
+           
+            <label>Phone</label>
+            <input type="text" name="phone" class="form-control" required><br>
+
+            <label>Services</label>
+            {% for id, label in service_choices %}
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="service_types" value="{{ id }}">
+                <label class="form-check-label">{{ label }}</label>
+            </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-primary mt-2">Add Technician</button>
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

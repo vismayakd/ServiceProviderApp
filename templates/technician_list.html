@@ -1,0 +1,143 @@
+{% extends 'company_base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<div class="container my-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="fw-bold text-dark mb-4"><i class="bi bi-people-fill me-2"></i>Technician List</h3>
+        <a href="{% url 'add_technician' %}" class="btn btn-primary ">
+            <i class="bi bi-plus-circle-fill"></i> Add Technician </a>
+    </div>
+
+    <form method="get" class="mb-3 d-flex align-items-center">
+        <select name="service" class="form-select w-auto me-2">
+            <option value=""> All Services </option>
+            {% for service in service_types %}
+           <option value="{{ service.id }}" {% if service.id|stringformat:"s" == selected_service %} selected {% endif %}>
+                {{ service.name }}
+            </option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary"> <i class="bi bi-funnel me-2"></i>Filter</button>
+    </form>
+
+    {% if technicians %}
+    <table class="table table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Service Types</th>
+                <th>Current Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tech in technicians %}
+            <tr>
+                <td style="color: rgb(74, 2, 26);" class="fw-bold">{{ tech.name }}</td>
+                <td>{{ tech.user.email }}</td>
+                <td>{{ tech.phone }}</td>
+                <td>
+                    {% for s in tech.service_types.all %}
+                    <span class="badge bg-info text-dark p-2">{{ s.name }}</span>
+                    {% endfor %}
+                </td>
+                <td>
+                    {% if tech.status == 'available' %}
+                        <span class="badge bg-success d-flex align-items-center justify-content-center  p-2">
+                            <i class="bi bi-check-circle-fill me-2"></i>  Available
+                        </span>
+                    {% elif tech.status == 'busy' %}
+                        <span class="badge bg-warning text-dark d-flex align-items-center justify-content-center p-2 ">
+                           <i class="bi bi-wrench-adjustable-circle me-2"></i> Busy
+                        </span>
+                    {% else %}
+                        <span class="badge bg-secondary">Unknown</span>
+                    {% endif %}
+                </td>
+                <td class="d-flex justify-content-evenly">
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                        data-bs-target="#editModal{{ tech.id }}"><i class="bi bi-pencil-fill"></i> Edit</button>
+
+                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
+                        data-bs-target="#deleteModal{{ tech.id }}"><i class="bi bi-trash-fill"></i> Delete</button>
+                </td>
+                <div class="modal fade" id="editModal{{ tech.id }}"  aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content rounded-4">
+                        <form method="POST" action="{% url 'technician_edit' tech.id %}">
+                            {% csrf_token %}
+                            <div class="modal-header bg-primary text-white">
+                                <h5 class="modal-title">Edit Technician</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-2">
+                                <label class="form-label">Name</label>
+                                <input type="text" class="form-control" name="name" value="{{ tech.name }}" required>
+                                </div>
+                                <div class="mb-2">
+                                <label class="form-label">Phone</label>
+                                <input type="text" class="form-control" name="phone" value="{{ tech.phone }}" required>
+                                </div>
+                                <div class="mb-2">
+                                <label class="form-label">Service Types</label>
+                                <select name="service_types" class="form-select" multiple required>
+                                    {% for s in service_types %}
+                                    <option value="{{ s.id }}" {% if s in tech.service_types.all %}selected{% endif %}>{{ s.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Update</button>
+                            </div>
+                        </form>
+                    </div>
+                    </div>
+                </div>
+
+               
+
+
+                <div class="modal fade" id="deleteModal{{ tech.id }}"  aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content rounded-4">
+                        <form method="POST" action="{% url 'technician_delete' tech.id %}">
+                        {% csrf_token %}
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title">Delete Technician</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to delete <strong>{{ tech.name }}</strong>?</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                        </div>
+                        </form>
+                    </div>
+                    </div>
+                </div>
+
+     
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    
+    {% else %}
+    <div class="alert alert-info text-center mt-4">No technicians added yet.</div>
+    {% endif %}
+
+
+
+
+</div>
+{% endblock %}

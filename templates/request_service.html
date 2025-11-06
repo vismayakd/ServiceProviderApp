@@ -1,0 +1,17 @@
+{% extends 'customer_base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container mt-4 w-50">
+  <div class="card shadow p-4 rounded-4">
+    <h4 class="text-center text-primary mb-3">Request {{ service.name }} service from {{ company.company_name }}</h4>
+
+    <form method="POST" autocomplete="off">
+      {% csrf_token %}
+      {{form|crispy}}
+      <div class="text-center">
+        <button type="submit" class="btn btn-primary rounded-3">Confirm Request</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

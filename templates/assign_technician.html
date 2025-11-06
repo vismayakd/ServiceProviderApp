@@ -1,0 +1,59 @@
+{% extends 'company_base.html' %}
+{% block content %}
+
+<div class="container my-5">
+  <h3 class="text-center mb-4 text-primary fw-bold">
+    Assign Technician for {{ service_request.service_type.name }}
+  </h3>
+  <p class="text-center text-muted mb-5">
+    Preferred Date: <b>{{ service_request.preferred_date }}</b>
+  </p>
+
+  <div class="row g-4">
+    {% for item in tech_data %}
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100 border-0 rounded-4">
+        <div class="card-body d-flex flex-column">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h5 class="card-title mb-1 fw-bold">{{ item.tech.name }}</h5>
+              <p class="text-muted small mb-0">{{ item.tech.phone }}</p>
+            </div>
+          </div>
+
+          {% if item.duties %}
+          <div class="duties-box mb-3 p-2 border rounded bg-light small" style="max-height: 120px; overflow-y: auto;">
+            <p class="fw-semibold text-primary mb-1">All Jobs:</p>
+            <ul class="list-unstyled mb-0">
+              {% for d in item.duties %}
+              <li class="mb-1">
+                <span class="fw-semibold">{{ d.service_type.name }}</span> —
+                {{ d.preferred_date }}
+                <small class="text-muted">({{ d.get_status_display }})</small>
+                {% if d.preferred_date == service_request.preferred_date %}
+                <span class="badge bg-warning text-dark ms-1">Same Day</span>
+                {% endif %}
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% else %}
+          <p class="text-success small mb-3">No jobs available.</p>
+          {% endif %}
+
+          <form method="POST" class="mb-0">
+            {% csrf_token %}
+            <input type="hidden" name="technician" value="{{ item.tech.id }}">
+            <button type="submit" class="btn btn-primary w-50 rounded-3 ">
+              Assign
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+
+{% endblock %}

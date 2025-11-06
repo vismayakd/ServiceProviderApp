@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% block content %}
+<style>
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+   body {
+       
+        background-image: url("{% static 'images/register.jpg' %}");
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+    .register-card {
+        
+        background:white;
+        margin: auto;
+        align-items: center;
+        border-radius: 20px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+        width: 100%;
+        max-width: 600px;
+    }
+    .form-control, .form-select {
+        border-radius: 10px;
+        padding: 10px;
+    }
+    .form-control, .form-label {
+        color: rgb(4, 4, 151);
+    }
+    button{
+        margin: auto;
+        align-items: center;
+    }
+    .navbar{
+      background-color: rgb(74, 2, 26);
+    }
+</style>
+<nav class="navbar navbar-expand-lg navbar-dark ">
+    <div class="container ms-2">
+        <a class="navbar-brand fw-bold" href="{% url 'home' %}">
+            <img src="{% static 'images/logo.jpg' %}" class="rounded" alt="Logo" style="width: 50px; height: 50px;">
+            ServiceConnect
+        </a>
+    </div>
+</nav>
+<div class="container mt-4">
+    <div class="register-card">
+    {% if title == 'company' %}
+      <h3 class="text-center mb-4 fw-bold text-dark">Company Registration</h3>
+    {% elif title == 'customer' %}
+      <h3 class="text-center mb-4 fw-bold text-dark">Customer Registration</h3>
+    {% endif %}
+    <form method="POST" enctype="multipart/form-data" autocomplete="off">
+      {% csrf_token %}
+      
+      {% for field in form %}
+        <div class="mb-3">
+          <label class="form-label">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}
+            <div class="text-danger small">{{ field.errors|striptags }}</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+      <center>
+         <button type="submit" class="btn btn-primary p-2 text-white fw-bold rounded ">Register</button>
+      </center>
+     
+    </form>
+  </div>
+</div>
+
+{% endblock %}

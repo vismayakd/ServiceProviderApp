@@ -1,0 +1,86 @@
+{% extends 'customer_base.html' %}
+{% load static %}
+{% block content %}
+<div class="container mt-5 w-50">
+  <div class="card shadow-lg rounded-4 p-4">
+    <h3 class="text-center text-dark fw-bold mb-4">Service Payment</h3>
+
+    <div class="row ">
+      <div class="col-md-6">
+        <p><strong>Customer:</strong> {{ customer.cust_name }}</p>
+        <p><strong>Email:</strong> {{ customer.user.email }}</p>
+        <p><strong>Phone:</strong> {{ customer.phone }}</p>
+      </div>
+      <div class="col-md-6 text-end">
+        <p><strong>Company:</strong> {{ company.company_name }}</p>
+        <p><strong>Date:</strong> {{ service_request.preferred_date }}</p>
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="row">
+      <div class="col-md-8">
+        <p><strong>Service Type:</strong> {{ service_request.service_type.name }}</p>
+        <p><strong>Service By:</strong> {{service_request.technician.name}}</p>
+      </div>
+      <div class="col-md-4 text-end">
+        <p><strong>Base Price:</strong> ₹{{ service_request.base_price }}</p>
+        <p><strong>Extra Charges:</strong> ₹{{ service_request.extra_charges|default:"0" }}</p>
+        <h5><strong>Total:</strong> ₹{{ service_request.actual_price }}</h5>
+      </div>
+    </div>
+
+    {% if service_request.status == 'payment_pending' %}
+    <div class="text-center mt-4">
+      <button type="button" class="btn btn-success px-4" data-bs-toggle="modal" data-bs-target="#paymentModal">
+        Proceed to Pay
+      </button>
+    </div>
+    {% elif service_request.status == 'paid' %}
+    <div class="alert alert-success text-center mt-4">
+      Payment Successful!
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="modal fade" id="paymentModal"  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 shadow">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">Payment Details</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <form method="post" action="{% url 'payment_proceed' service_request.id %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Cardholder Name</label>
+            <input type="text" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Card Number</label>
+            <input type="text" class="form-control" maxlength="16" placeholder="xxxx xxxx xxxx xxxx" required>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Expiry</label>
+              <input type="text" class="form-control" placeholder="MM/YY" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">CVV</label>
+              <input type="password" class="form-control" maxlength="3" required>
+            </div>
+          </div>
+
+          <div class="text-center mt-3">
+            <button type="submit" class="btn btn-success w-100">Pay ₹{{ service_request.actual_price }}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

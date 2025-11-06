@@ -1,0 +1,63 @@
+{% extends 'customer_base.html' %}
+{% load static %}
+{% block content %}
+<style>
+  .card {
+    background-color: white
+  }
+  .welcome{
+    color:  rgb(74, 2, 26);
+    opacity: 0;
+    transform: translateX(-30px);
+    animation: fadeSlideIn 1s ease-out forwards;
+  }
+  @keyframes fadeSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+</style>
+<div class="container mt-2">
+  <div class="row text-center">
+    <h2 class="fw-bold welcome">
+      Welcome, {{ request.user.customer_profile.cust_name|title }}!
+    </h2>
+    <p class="lead  mt-2">
+      Choose a company below to request a fast and reliable service.
+    </p>
+
+  </div>
+
+
+  <h3 class="mb-4 text-dark">Available Companies</h3>
+  <div class="row">
+    {% for company in companies %}
+    <div class="col-md-4 mb-4">
+      <div class="card company_card shadow-sm">
+        <div class="row g-0 align-items-center">
+          <div class="col-4 p-3 text-center">
+            {% if company.logo %}
+            <img src="{{ company.logo.url }}" class="img-fluid rounded-circle"
+              style="height:80px; width:80px; object-fit:cover;">
+            {% endif %}
+          </div>
+          <div class="col-8">
+            <div class="card-body">
+              <h5 class="card-title">{{ company.company_name }}</h5>
+              <p class="card-text small text-muted mb-2">{{ company.phone }}</p>
+              <a href="{% url 'cust_view_services' company.id %}" class="btn btn-primary btn-sm">View Services</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

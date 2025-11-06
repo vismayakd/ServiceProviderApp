@@ -1,0 +1,119 @@
+{% extends 'technician_base.html'%}
+
+{% block content %}
+<div class="container my-4">
+    <h3 class="fw-bold mb-4">Welcome, {{ tech.name|title }}</h3>
+
+    <h5 class="mb-3">Assigned Requests</h5>
+    {% if requests %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>Customer</th>
+                    <th>Location</th>
+                    <th>Service Type</th>
+                    <th>Prefered Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requests %}
+                <tr>
+                    <td>{{ req.customer.cust_name }}</td>
+                    <td>{{ req.customer.address }}</td>
+                    <td>{{ req.service_type.name }}</td>
+                    <td>{{ req.preferred_date}}</td>
+                    <td>
+                        <span class="badge 
+                        {% if req.status == 'completed' %}
+                            bg-success
+                        {% elif req.status == 'assigned' %}
+                            bg-primary
+                        {% elif req.status == 'accepted' %}
+                            bg-info
+                        {% elif req.status == 'Proceeding' %}
+                            bg-warning text-dark
+                        {% elif req.status == 'cancelled' %}
+                            bg-danger
+                        {% else %}
+                            bg-secondary
+                        {% endif %}
+                    ">
+                           {{ req.get_status_display }}
+                        </span>
+                    </td>
+                   
+                    <td>
+                        {% if req.status == 'assigned' %}
+                        <a href="{% url 'update_request_status' req.id 'accepted' %}"
+                            class="btn btn-sm btn-success">Accept</a>
+                        <a href="{% url 'update_request_status' req.id 'rejected' %}"
+                            class="btn btn-sm btn-danger">Reject</a>
+                        {% elif req.status == 'accepted' %}
+                        <a href="{% url 'update_request_status' req.id 'Proceeding' %}"
+                            class="btn btn-primary btn-sm">Start Work</a>
+                        {% elif req.status == 'Proceeding' %}
+                        <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal"
+                            data-bs-target="#completeserviceModal{{ req.id }}"> Mark Completed
+                        </button>
+                        {% else %}
+                            <p class="text-muted">NA</p>
+                        {% endif %}
+                    </td>
+                </tr>
+
+
+
+                <div class="modal fade" id="completeserviceModal{{ req.id }}" 
+                    aria-labelledby="completeserviceModalLabel{{ req.id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form method="post" action="{% url 'complete_service' req.id %}" autocomplete="off">
+                                {% csrf_token %}
+                                <div class="modal-header bg-success text-white">
+                                    <h5 class="modal-title" id="completeModalLabel{{ req.id }}">Complete Service </h5>
+                                   
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+
+                                <div class="modal-body">
+                                    <p class=" text-primary text-center fw-semibold">
+                                        {{req.service_type.name }} service for {{req.customer.cust_name}}</p> 
+                                    <div class="mb-3">
+                                        <label class="form-label">Base Price</label>
+                                        <input type="text" class="form-control" value="{{ req.base_price }}" readonly>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Extra Charges (if any)</label>
+                                        <input type="number" name="extra_charges" step="0.01" class="form-control"
+                                            placeholder="Enter extra charges">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Notes</label>
+                                        <input type="text" class="form-control"
+                                            placeholder="Enter the note if any">
+                                    </div>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-success">Complete</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">No requests assigned yet.</div>
+    {% endif %}
+</div>
+
+{% endblock %}
