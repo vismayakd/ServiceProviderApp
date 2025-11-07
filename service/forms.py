@@ -7,22 +7,114 @@ from . models import CustomerProfile,CompanyProfile,ServiceType,ServiceRequest,T
 
 User = get_user_model()
 class CompanyRegistrationForm(UserCreationForm):
-    company_name = forms.CharField(label='Company Name', max_length=100)
-    phone = forms.CharField(label='Phone', max_length=15)
-    address = forms.CharField(label='Address', widget=forms.Textarea(attrs={'rows': 3}))
-    logo = forms.ImageField(label='Company Logo', required=False)
+    company_name = forms.CharField(
+        label='Company Name',
+        max_length=100,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
+    phone = forms.CharField(
+        label='Phone',
+        max_length=15,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
+    email = forms.EmailField(
+        label='Email',
+        widget=forms.EmailInput(attrs={'class': 'form-control'})
+    )
+
+    address = forms.CharField(
+        label='Address',
+        widget=forms.Textarea(
+            attrs={
+                'rows': 3,
+                'class': 'form-control',
+                'style': 'resize: vertical; width:100%; box-sizing:border-box;'
+            }
+        )
+    )
+
+    logo = forms.ImageField(
+        label='Company Logo',
+        required=False,
+        widget=forms.ClearableFileInput(attrs={'class': 'form-control'})
+    )
+
+    username = forms.CharField(
+        label='Username',
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
+    password1 = forms.CharField(
+        label='Password',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'})
+    )
+
+    password2 = forms.CharField(
+        label='Confirm Password',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'})
+    )
 
     class Meta:
         model = User
-        fields = [ 'company_name', 'phone','email', 'address', 'logo','username', 'password1', 'password2']
+        fields = [
+            'company_name', 'phone', 'email', 'address', 'logo',
+            'username', 'password1', 'password2'
+        ]
+
 
 class CustomerRegistrationForm(UserCreationForm):
-    cust_name = forms.CharField(label='Customer Name', max_length=100)
-    phone = forms.CharField(label='Phone', max_length=15)
-    address = forms.CharField(label='Address', widget=forms.Textarea(attrs={'rows': 3}))
+    cust_name = forms.CharField(
+        label='Customer Name',
+        max_length=100,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
+    phone = forms.CharField(
+        label='Phone',
+        max_length=15,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
+    email = forms.EmailField(
+        label='Email',
+        widget=forms.EmailInput(attrs={'class': 'form-control'})
+    )
+
+    address = forms.CharField(
+        label='Address',
+        widget=forms.Textarea(
+            attrs={
+                'rows': 3,
+                'class': 'form-control',
+                'style': 'resize: vertical; width:100%; box-sizing:border-box;'
+            }
+        )
+    )
+
+    username = forms.CharField(
+        label='Username',
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
+    password1 = forms.CharField(
+        label='Password',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'})
+    )
+
+    password2 = forms.CharField(
+        label='Confirm Password',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'})
+    )
+
     class Meta:
         model = User
-        fields = [ 'cust_name', 'phone','email', 'address','username','password1', 'password2']
+        fields = [
+            'cust_name', 'phone', 'email', 'address',
+            'username', 'password1', 'password2'
+        ]
+
 
 
 class ServiceTypeForm(forms.ModelForm):

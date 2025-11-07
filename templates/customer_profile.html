@@ -2,8 +2,12 @@
 {% load crispy_forms_tags %}
 {% block content %}
 
-<div class="container d-flex justify-content-center mt-5">
-    <div class="card shadow-lg rounded-4 p-4 w-50 text-center">
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+      
+      <div class="card shadow-lg rounded-4 p-4 text-center">
+
         <i class="bi bi-person-circle display-4 text-primary"></i>
         <p class="text-muted">{{ profile.user.email }}</p>
         <h3 class="mt-3">{{ profile.cust_name }}</h3>
@@ -14,6 +18,7 @@
                 <i class="bi bi-pencil"></i> Edit Profile
             </button>
         </div>
+      </div>
   </div>
 </div>
 

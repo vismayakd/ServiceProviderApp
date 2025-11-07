@@ -58,20 +58,43 @@
             margin-left: 220px;
             padding: 30px;
         }
+        @media (max-width: 768px) {
+        .sidebar {
+            position: relative;
+            width: 100%;
+            height: auto;
+        }
 
+        .main-content {
+            margin-left: 0;
+            padding: 15px;
+        }
+        .table th, .table td {
+            padding: 0.3rem; 
+            font-size: 0.85rem;
+        }
+    }
 
        
     </style>
 </head>
 
 <body>
-
-    <div class="sidebar">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light d-md-none">
+        <div class="container-fluid">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
+                data-bs-target="#mobileSidebar" aria-controls="mobileSidebar" 
+                aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+    </nav>
+    <div class="collapse d-md-block sidebar" id="mobileSidebar">
         <h5>
             {% if request.user.technician_profile %}
                 {% if request.user.technician_profile.company.logo %}
-                <img src="{{ request.user.technician_profile.company.logo.url }}" alt="Company Logo" style="height: 30px; width: 30px;"
-                    class="rounded-4">
+                <img src="{{ request.user.technician_profile.company.logo.url }}" 
+                alt="Company Logo" style="height: 30px; width: 30px;" class="rounded-4">
                 {% endif %}
                 <span>{{ request.user.technician_profile.company.company_name }}</span>
             {% endif %}
@@ -87,8 +110,7 @@
             <i class="bi bi-box-arrow-right me-2"></i>Logout
         </a>
     </div>
-
-
+   
     <div class="main-content">
         
         {% if messages %}

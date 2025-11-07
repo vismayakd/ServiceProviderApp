@@ -42,7 +42,7 @@ def company_form(request):
                 address=form.cleaned_data['address'],
                 logo=form.cleaned_data.get('logo')
             )
-
+            messages.success(request, "Account created successfully! Please log in.")
             return redirect('login')
     else:
         form = CompanyRegistrationForm()
@@ -297,18 +297,18 @@ def customer_register(request):
     if request.method == 'POST':
         form = CustomerRegistrationForm(request.POST)
         if form.is_valid():
-           user =  form.save(commit=False)
-           user.role = 'customer'
-           user.save()
-        CustomerProfile.objects.create(
-                user=user,
-                cust_name=form.cleaned_data['cust_name'],
-                phone=form.cleaned_data['phone'],
-                address=form.cleaned_data['address'],
+            user =  form.save(commit=False)
+            user.role = 'customer'
+            user.save()
+            CustomerProfile.objects.create(
+                    user=user,
+                    cust_name=form.cleaned_data['cust_name'],
+                    phone=form.cleaned_data['phone'],
+                    address=form.cleaned_data['address'],
 
-            )
-    
-        return redirect('login')
+                )
+            messages.success(request, "Account created successfully! Please log in.")
+            return redirect('login')
     else:
 
         form = CustomerRegistrationForm()
