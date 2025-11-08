@@ -37,25 +37,19 @@
         text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
     }
 
-    .special-container {
-        border-radius: 20px;
-       
-        color: #222;
-    }
+   
 
-    .special-container .col-12  {
-        flex: 1;
-        max-width: 300px;
-        padding: 35px 20px;
+    .special  {
         background: rgba(255, 211, 211, 0.9);
+        color: black;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        border-radius: 50%;
+        border-radius: 10px;
         transition: all 0.4s ease;
         cursor: pointer;
         text-align: center;
     }
 
-    .special-container i {
+    .special i {
         font-size: 2.5rem;
         display: block;
         margin-bottom: 15px;
@@ -63,27 +57,27 @@
     }
 
    
-    .special-container .col-md-4:hover {
+    .special:hover {
         transform: translateY(-10px);
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
         background: rgba(255, 255, 255, 1);
     }
 
-    .special-container .col-md-4:hover i {
+    .special:hover i {
         transform: scale(1.1);
         color: #0d6efd;
     }
 
-    .special-container h5,
-    .special-container p {
+    .special h5,
+    .special p {
         transition: color 0.4s ease;
     }
 
-    .special-container .col-md-4:hover h5 {
+    .special:hover h5 {
         color: #0d6efd;
     }
 
-    .special-container .col-md-4:hover p {
+    .special:hover p {
         color: rgb(74, 2, 26);
     }
 
@@ -127,24 +121,19 @@
             transform: translateY(0);
         }
     }
-    @media (max-width: 768px) {
-            .special-container{
-                flex-direction: column;
-            }
-        }
 </style>
 
-<nav class="navbar navbar-expand-lg navbar-dark fixed-top">
-    <div class="container ms-2">
-        <a class="navbar-brand fw-bold" href="{% url 'home' %}">
-            <img src="{% static 'images/logo.jpg' %}" class="rounded" alt="Logo" style="width: 50px; height: 50px;">
+<nav class="navbar navbar-expand-lg  fixed-top">
+    <div class="container d-flex  justify-content-between  align-items-center">
+        <a class="navbar-brand fw-bold d-flex
+            align-items-center m-0 text-white" href="{% url 'home' %}">
+            <img src="{% static 'images/logo.jpg' %}" class="rounded me-2" 
+            alt="Logo" style="width: 50px; height: 50px;">
             ServiceConnect
         </a>
-        <div>
-            <a class="nav-link d-inline text-white" href="{% url 'add_company' %}">
-                Register Your Company
-            </a>
-        </div>
+        <a class="text-white  text-decoration-none" href="{% url 'add_company' %}">
+            Register Your Company
+        </a>
     </div>
 </nav>
 
@@ -161,31 +150,28 @@
         </div>
     </div>
 
-    <div class="container special-container text-center">
-        <div class="row d-flex justify-content-center g-4">
-            <div class="col-12  me-2">
-                <div class="overlay"></div>
-                <div class="content">
-                    <i class="bi bi-briefcase text-primary"></i>
-                    <h5 class="mt-2">Trusted Companies</h5>
+    <div class="container text-center py-5">
+        <div class="row g-4">
+            <div class="col-12 col-sm-6 col-md-4 ">
+                <div class="p-4 border rounded h-100 special">
+                    <i class="bi bi-briefcase text-primary fs-1"></i>
+                    <h5 class="mt-3">Trusted Companies</h5>
                     <p>Partnered with top-rated companies to ensure quality and reliability.</p>
                 </div>
             </div>
 
-            <div class="col-12  me-2">
-                <div class="overlay"></div>
-                <div class="content">
-                    <i class="bi bi-gear text-success"></i>
-                    <h5 class="mt-2">Skilled Technicians</h5>
+            <div class="col-12 col-sm-6 col-md-4 ">
+                <div class="p-4 border rounded h-100 special">
+                    <i class="bi bi-gear text-success fs-1"></i>
+                    <h5 class="mt-3">Skilled Technicians</h5>
                     <p>All technicians are verified and experienced to handle your requests efficiently.</p>
                 </div>
             </div>
 
-            <div class="col-12  me-2">
-                <div class="overlay"></div>
-                <div class="content">
-                    <i class="bi bi-clock text-warning"></i>
-                    <h5 class="mt-2">Quick Response</h5>
+            <div class="col-12 col-sm-6 col-md-4 ">
+                <div class="p-4 border rounded h-100 special">
+                    <i class="bi bi-clock text-warning fs-1"></i>
+                    <h5 class="mt-3">Quick Response</h5>
                     <p>Our system ensures your service requests are processed instantly.</p>
                 </div>
             </div>
