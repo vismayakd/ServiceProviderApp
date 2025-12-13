@@ -31,6 +31,8 @@ urlpatterns = [
     path('technician_delete/<int:tech_id>/', views.technician_delete, name='technician_delete'),
     path("assign_technician/<int:request_id>/", views.assign_technician, name="assign_technician"),
     path("mark_payment_pending/<int:pk>/", views.mark_payment_pending, name="mark_payment_pending"),
+    path('notifications/', views.notifications, name='notifications'),
+    path('notifications/mark-read/', views.mark_notifications_read, name='mark_notifications_read'),
 
 
     path('technician_dashboard/',views.technician_dashboard,name='technician_dashboard'),

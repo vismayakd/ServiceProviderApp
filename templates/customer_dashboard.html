@@ -5,17 +5,67 @@
   .card {
     background-color: white
   }
-  .welcome{
-    color:  rgb(74, 2, 26);
+
+  .welcome {
+    color: rgb(74, 2, 26);
     opacity: 0;
     transform: translateX(-30px);
     animation: fadeSlideIn 1s ease-out forwards;
+  }
+
+  .service-card {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    height: 230px;
+    cursor: pointer;
+    transition: transform .2s;
+  }
+
+  .service-card:hover {
+    transform: scale(1.03);
+  }
+
+  .service-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(60%);
+  }
+
+  .service-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 15px;
+    color: white;
+  }
+
+  .service-name {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 0;
+  }
+
+  .company-name {
+    font-size: 14px;
+    opacity: 0.9;
+  }
+  .badge.bg-warning {
+    font-size: 14px;
+    border-radius: 8px;
+  }
+  .bi-star-fill {
+    font-size: 15px;
+    margin-right: 2px;
   }
   @keyframes fadeSlideIn {
     from {
       opacity: 0;
       transform: translateX(-30px);
     }
+
     to {
       opacity: 1;
       transform: translateX(0);
@@ -27,37 +77,134 @@
     <h2 class="fw-bold welcome">
       Welcome, {{ request.user.customer_profile.cust_name|title }}!
     </h2>
-    <p class="lead  mt-2">
-      Choose a company below to request a fast and reliable service.
-    </p>
+   
 
   </div>
+  <div class="container mt-4">
 
+    <form method="get" class="row mb-4">
+      <div class="col-md-5">
+        <input type="text" class="form-control" name="search" placeholder="Search services..." value="{{ search }}" autocomplete="off">
+      </div>
 
-  <h3 class="mb-4 text-dark">Available Companies</h3>
-  <div class="row">
-    {% for company in companies %}
-    <div class="col-md-4 mb-4">
-      <div class="card company_card shadow-sm">
-        <div class="row g-0 align-items-center">
-          <div class="col-4 p-3 text-center">
-            {% if company.logo %}
-            <img src="{{ company.logo.url }}" class="img-fluid rounded-circle"
-              style="height:80px; width:80px; object-fit:cover;">
+      <div class="col-md-4">
+        <select class="form-control" name="company">
+          <option value="">All Companies</option>
+          {% for c in companies %}
+          <option value="{{ c.id }}">
+            {{ c.company_name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <button class="btn btn-primary w-100">Search</button>
+      </div>
+    </form>
+    {% if page_obj %}
+    <div class="row g-4">
+
+      {% for s in page_obj %}
+      <div class="col-md-3">
+        <div class="service-card" data-bs-toggle="modal" data-bs-target="#modal{{ s.id }}">
+
+          {% if s.image %}
+          <img src="{{ s.image.url }}" alt="{{ s.name }}">
+          {% endif %}
+
+          <div class="service-overlay">
+            <h5 class="service-name">{{ s.name }}</h5>
+            <p class="company-name">{{ s.company.company_name }}</p>
+            <p class="company-name">₹{{ s.base_price }}</p>
+            {% if s.avg_rating %}
+              <span class="badge bg-warning text-dark rounded px-2 py-1">
+                <i class="bi bi-star-fill"></i> {{ s.avg_rating|floatformat:1 }}({{ s.rating_count }})
+              </span>
+             
+            {% else %}
+              <span class="text-warning">No ratings</span>
             {% endif %}
           </div>
-          <div class="col-8">
-            <div class="card-body">
-              <h5 class="card-title">{{ company.company_name }}</h5>
-              <p class="card-text small text-muted mb-2">{{ company.phone }}</p>
-              <a href="{% url 'cust_view_services' company.id %}" class="btn btn-primary btn-sm">View Services</a>
+
+        </div>
+        <div class="modal fade" id="modal{{ s.id }}" tabindex="-1">
+          <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+
+              <div class="modal-header">
+                <h5 class="modal-title">{{ s.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+
+              <div class="modal-body">
+                <img src="{% if s.image %}{{ s.image.url }}{% endif %}" class="img-fluid rounded mb-3"
+                  style="width:100%; height:300px; object-fit:cover;">
+
+                <h6>Company: {{ s.company.company_name }}</h6>
+                
+
+                <p class="mt-3">{{ s.description }}</p>
+                <h6 class="text-success">Price: ₹{{ s.base_price }}</h6>
+                <p class="text-muted text-warning"><em>Price may vary according to service complexity</em></p>        
+              </div>
+
+              <div class="modal-footer">
+                <a href="{% url 'request_service' s.id %}" class="btn btn-primary">
+                  Request Service
+                </a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              </div>
+
             </div>
           </div>
         </div>
-      </div>
-    </div>
-    {% endfor %}
-  </div>
-</div>
 
-{% endblock %}
+      </div>
+      {% endfor %}
+    </div>
+
+
+    <div class="d-flex justify-content-center mt-4">
+      <nav>
+        <ul class="pagination">
+
+          {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link"
+              href="?page={{ page_obj.previous_page_number }}&search={{ search }}&company={{ company_id }}">
+              Previous
+            </a>
+          </li>
+          {% endif %}
+
+          <li class="page-item disabled">
+            <a class="page-link">
+              Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </a>
+          </li>
+
+          {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link"
+              href="?page={{ page_obj.next_page_number }}&search={{ search }}&company={{ company_id }}">
+              Next
+            </a>
+          </li>
+          {% endif %}
+
+        </ul>
+      </nav>
+    </div>
+    {% else%}
+    <div class="text-center py-5">
+      <div class="mb-3">
+        <i class="bi bi-inbox text-muted opacity-25 display-1"></i>
+      </div>
+      <h5 class="text-muted fw-normal">No Services found</h5>
+    </div>
+    {% endif %}
+
+  </div>
+
+  {% endblock %}

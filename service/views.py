@@ -4,15 +4,17 @@ from django.contrib.auth import login,authenticate,logout
 from .forms import (CompanyRegistrationForm,CustomerRegistrationForm,
                     CustomerProfileForm,CompanyProfileForm,ServiceTypeForm,
                     ServiceRequestForm,TechnicianForm,TechnicianSelfEditForm)
-from . models import CompanyProfile,ServiceRequest,TechnicianProfile,CustomerProfile, ServiceType
+from . models import CompanyProfile,ServiceRequest,TechnicianProfile,CustomerProfile, ServiceType,Notification
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.mail import send_mail
-from django.conf import settings
+from .tasks import send_custom_email,create_notification
 from django.core.paginator import Paginator
 from decimal import Decimal
 import random
 import string
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.db.models import Avg, Q, F, Count
 
 User = get_user_model()
 def generate_username(email, company_name):
@@ -114,21 +116,60 @@ def profile_edit(request):
 
     return render(request, template, {'form': form, 'profile': profile})
 
-@login_required
+@login_required 
 def company_dashboard(request):
-    if request.user.role != 'company':
-        return redirect('login')  
+    company = request.user.company_profile    
+    all_requests = ServiceRequest.objects.filter(company=company).select_related(
+        'customer', 'technician', 'service_type'
+    ).order_by('-preferred_date')
 
-    company = request.user.company_profile 
-    service_requests_list = ServiceRequest.objects.filter(
-        company=company).order_by('-preferred_date')
-    technicians = TechnicianProfile.objects.filter(company=company)
-    paginator = Paginator(service_requests_list, 10)
+    counts = {
+        'requested': all_requests.filter(status='requested').count(),
+        'assigned': all_requests.filter(status='assigned').count(),
+        'accepted': all_requests.filter(status='accepted').count(),
+        'rejected': all_requests.filter(status='rejected').count(),
+        'Proceeding': all_requests.filter(status='Proceeding').count(),
+        'payment_pending': all_requests.filter(status='payment_pending').count(),
+        'paid': all_requests.filter(status='paid').count(),
+        'completed': all_requests.filter(status='completed').count(),
+        'cancelled': all_requests.filter(status='cancelled').count(),
+        'total': all_requests.count(),
+    }
+    
+    
+    status_cards = [
+        ('requested', 'Requested', 'bi-hourglass-split', 'primary'),
+        ('assigned', 'Assigned', 'bi-person-check-fill', 'info'),
+        ('accepted', 'Accepted', 'bi-calendar-check-fill', 'success'),
+        ('Proceeding', 'Proceeding', 'bi-gear-wide-connected', 'warning'),
+        ('completed', 'Completed', 'bi-check-circle-fill', 'success'),
+        ('payment_pending', 'Payment Pending', 'bi-wallet2', 'danger'),
+        ('paid', 'Paid', 'bi-cash-stack', 'success'), 
+        ('cancelled', 'Cancelled', 'bi-x-circle', 'secondary'),
+    ]
+
+
+
+    selected_status = request.GET.get('status')
+    
+    filtered_requests = all_requests
+    if selected_status:
+        filtered_requests = all_requests.filter(status=selected_status)
+
+    paginator = Paginator(filtered_requests, 10)
     page_number = request.GET.get('page')
     service_requests = paginator.get_page(page_number)
+    
+    context = {
+        'requests': service_requests,
+        'count':counts,
+        'status_cards': status_cards,
+        'selected_status': selected_status,
+        'company': company
+    }
 
-    return render(request,'company_dashboard.html',
-        context={'company':company, 'requests': service_requests,'technicians': technicians})
+    return render(request, 'company_dashboard.html', context)
+
 
 @login_required
 def technician_list(request):
@@ -143,8 +184,12 @@ def technician_list(request):
     else:
         technician_list  = TechnicianProfile.objects.filter(
             company=company)
+    paginator = Paginator(technician_list, 10)
+    page_number = request.GET.get('page')
+    technicians = paginator.get_page(page_number)
+    
     return render(request,'technician_list.html',context={
-        'technicians':technician_list,'service_types':service_types,
+        'page_obj':technicians,'service_types':service_types,
         'selected_service':selected_service})
 
 
@@ -182,29 +227,34 @@ def technician_add(request):
             technician.save()
             technician.service_types.set(service_types)
             try:
-                subject = f"Welcome to {company.company_name} as a Technician!"
-                message = (
-                    f"Dear {technician.name},\n\n"
-                    f"Welcome to {company.company_name}!\n\n"
-                    f"We’re excited to have you on board as one of our valued technicians. "
-                    f"Your account has been successfully created in our system.\n\n"
-                    f"Here are your login details:\n"
-                    f"Username: {username}\n"
-                    f"Password: {password}\n\n"
-                    f"You can log in to your account using the link below:\n"
-                    f"http://127.0.0.1:8000/login/\n\n"
-                    f"Best regards,\n"
-                    f"{company.company_name} \n"
-                )
-                send_mail(
-                    subject,
-                    message,
-                    settings.EMAIL_HOST_USER,
-                    [email],
-                    fail_silently=False,
+                send_custom_email.delay(
+                    subject=f"Welcome to {company.company_name}!",
+                    message=f"""
+                    Dear {technician.name},
+
+                    Welcome to **{company.company_name}**!
+
+                    Your technician account has been successfully created and activated.
+                    You can now log in to your dashboard and begin managing your assigned service requests.
+
+                     **Login Credentials**
+                    • **Username:** {technician.user.username}
+                    • **Password:** {password}
+
+                    Please keep your credentials confidential and do not share them with anyone.
+
+                    If you have any questions or need assistance, feel free to reach out to your company admin or our support team.
+
+                    Thank you for joining our team!
+                    We look forward to working with you.
+
+                    Warm regards,
+                    {company.company_name}
+                    Support Team
+                    """,
+                        email=technician.user.email
                 )
                 messages.success(request, "Technician added and credentials sent by email.")
-                
             except Exception as e:
                 messages.warning(request, f"Technician added but email could not be sent")
             return redirect('technician_list')
@@ -257,7 +307,7 @@ def assign_technician(request, request_id):
     service_type = service_request.service_type
     technicians = TechnicianProfile.objects.filter(
         company=company,service_types=service_type)
-
+    print("te", technicians)
     tech_data = []
     for tech in technicians:
         duties = ServiceRequest.objects.filter(
@@ -275,6 +325,20 @@ def assign_technician(request, request_id):
         service_request.technician = technician
         service_request.status = 'assigned'
         service_request.save()
+        message = f"New {service_request.service_type.name} service request assigned to you for {service_request.customer.cust_name}."
+        create_notification.delay(technician.user.id, message)
+        send_custom_email.delay(
+            subject="Technician Assigned",
+            message=f"""
+                Hello {service_request.customer.cust_name},
+
+                Your service request '{service_request.service_type.name}' 
+                has been assigned to technician {technician.name}.
+
+                Company: {company.company_name}
+                """,
+                email=service_request.customer.user.email
+            )
         messages.success(request, f"{technician.name} has been assigned to this request.")
         return redirect('company_dashboard')
 
@@ -287,9 +351,12 @@ def assign_technician(request, request_id):
 @login_required
 def mark_payment_pending(request, pk):
     req = get_object_or_404(ServiceRequest, pk=pk)
+    cust_user = req.customer.user.id
     if request.method == 'POST' and req.status == 'completed':
         req.status = 'payment_pending'
         req.save()
+        message = f"Please complete payment for {req.title}"
+        create_notification.delay(cust_user, message)
         messages.success(request, f"Requested {req.customer.cust_name} for makimg payment.")
     return redirect('company_dashboard')
 
@@ -305,8 +372,15 @@ def customer_register(request):
                     cust_name=form.cleaned_data['cust_name'],
                     phone=form.cleaned_data['phone'],
                     address=form.cleaned_data['address'],
-
                 )
+            send_custom_email.delay(
+                subject="Welcome to ServiceConnect!",
+                message=f"""
+                Hello {form.cleaned_data['cust_name']},
+                Your account has been created successfully.
+                Thank you for joining ServiceConnect!""",
+                email=form.cleaned_data['email']
+            )
             messages.success(request, "Account created successfully! Please log in.")
             return redirect('login')
     else:
@@ -317,16 +391,44 @@ def customer_register(request):
         context={'form':form,'title':'customer'})
 
 def customer_dashboard(request):
+    search = request.GET.get('search', '')
+    company_id = request.GET.get('company', '')
+
+    # services = ServiceType.objects.all()
+    services = ServiceType.objects.annotate(
+        avg_rating=Avg('service_requests__rating'),
+        rating_count=Count('service_requests__rating')  
+    ).order_by('-id')  
+    if search:
+        services = services.filter(name__icontains=search)
+    if company_id:
+        services = services.filter(company__id=company_id)
+    
+    paginator = Paginator(services, 8) 
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     companies = CompanyProfile.objects.all()
+    context ={ 
+        "page_obj": page_obj,
+        "companies": companies,
+        "search": search,
+        "company_id": company_id
+    }
+    
     return render(request,'customer_dashboard.html',
-        context={'companies':companies})
+        context)
 
 @login_required
 def service_view(request):
     company = get_object_or_404(CompanyProfile, user=request.user)
     services_list = ServiceType.objects.filter(company=company)
+    paginator = Paginator(services_list, 8) 
+
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     return render(request,'service_view.html',
-        context={'service_types':services_list})
+        context={'page_obj':page_obj})
 
 
 @login_required
@@ -379,7 +481,6 @@ def cust_view_services(request,id):
 def request_service(request, service_id):
     service = get_object_or_404(ServiceType, id=service_id)
     company = service.company
-    print("company",company)
     customer_profile = get_object_or_404(CustomerProfile, user=request.user)
     if request.method == 'POST':
         form = ServiceRequestForm(request.POST)
@@ -391,6 +492,20 @@ def request_service(request, service_id):
             service_request.title = f"{service.name} - {company.company_name}"
             service_request.base_price = service.base_price
             service_request.save()
+            message = f"New service request from {request.user.customer_profile.cust_name} for {service_request.service_type.name}."
+            create_notification.delay(company.user.id, message)
+            send_custom_email.delay(
+                subject="New Service Request Received",
+                message=f"""
+                Hello {company.company_name},
+
+                A new service request has been submitted.
+
+                Customer: {customer_profile.cust_name}
+                Service Requested: {service_request.service_type.name}
+                Preferred Date: {service_request.preferred_date}""",
+                    email=company.user.email
+            )
             messages.success(request, "Service request submitted successfully!")
             return redirect('customer_dashboard')
         else:
@@ -404,9 +519,19 @@ def request_service(request, service_id):
 
 @login_required
 def cust_view_requests(request):
-    customer = get_object_or_404(CustomerProfile,user=request.user)
-    requests= ServiceRequest.objects.filter(customer=customer)
-    return render(request,'customer_requests.html',context={'requests':requests})
+    customer = get_object_or_404(CustomerProfile, user=request.user)
+    request_list = ServiceRequest.objects.filter(customer=customer).order_by('-created_at')
+
+    status = request.GET.get('status')
+    if status:
+        request_list = request_list.filter(status=status)
+
+    paginator = Paginator(request_list, 10)
+    page_number = request.GET.get('page')
+    requests = paginator.get_page(page_number)
+
+    return render(request, 'customer_requests.html', {'requests': requests})
+
 
 
 @login_required
@@ -431,7 +556,9 @@ def payment_proceed(request, request_id):
 
     service_request.status = 'paid'
     service_request.save()
-
+    company_user = service_request.company.user.id
+    message = f"{service_request.customer.cust_name} has paid {service_request.actual_price}"
+    create_notification.delay(company_user, message)
     messages.success(request, "Payment successful! Thank you.")
     return redirect('feedback_view', request_id=service_request.id)
 
@@ -465,6 +592,7 @@ def technician_dashboard(request):
 def update_request_status(request, request_id, status):
     tech_profile = get_object_or_404(TechnicianProfile, user=request.user)
     service_request = get_object_or_404(ServiceRequest, id=request_id, technician=tech_profile)
+    company_user = service_request.company.user.id
     print("status",status)
     valid_statuses = ['accepted', 'rejected', 'Proceeding']
     if status not in valid_statuses:
@@ -472,17 +600,50 @@ def update_request_status(request, request_id, status):
         return redirect('technician_dashboard')
 
     service_request.status = status
+
     service_request.save()
 
-    if status in ['accepted', 'proceeding']:
+    if status in ['accepted', 'Proceeding']:
         tech_profile.status = 'busy'
+        if status == 'accepted':
+            message = f"{tech_profile.name} has accepted {service_request.service_type.name} service for {service_request.customer.cust_name}"
+        else:
+            message = f"{tech_profile.name} is proceeding with {service_request.service_type.name} service for {service_request.customer.cust_name}"
     elif status == 'rejected':
         tech_profile.status = 'available'
+        message = f"{tech_profile.name} has rejected {service_request.service_type.name} service for {service_request.customer.cust_name}"
     tech_profile.save()
-
+    create_notification.delay(company_user, message)
     return redirect('technician_dashboard')
 
 
+# @login_required
+# def complete_service(request, request_id):
+#     tech_profile = get_object_or_404(TechnicianProfile, user=request.user)
+#     service_request = get_object_or_404(
+#         ServiceRequest,
+#         id=request_id,
+#         technician=tech_profile
+#     )
+#     company_user = service_request.company.user.id
+#     if request.method == 'POST':
+#         extra_charges_input = request.POST.get('extra_charges', '').strip()
+#         try:
+#             extra_charges = Decimal(extra_charges_input) if extra_charges_input else Decimal(0)
+#         except:
+#             extra_charges = Decimal(0)
+#         service_request.extra_charges = extra_charges
+#         service_request.actual_price = service_request.base_price + extra_charges
+#         service_request.status = 'completed'
+#         service_request.save()
+#         tech_profile.status = 'available'
+#         tech_profile.save()
+#         message = f"{tech_profile.name} has completed {service_request.service_type.name} service for {service_request.customer.cust_name}"
+#         create_notification.delay(company_user, message)
+#         messages.success(request, "Service marked as completed and sent for admin approval.")
+#         return redirect('technician_dashboard')
+
+#     return redirect('technician_dashboard')
 @login_required
 def complete_service(request, request_id):
     tech_profile = get_object_or_404(TechnicianProfile, user=request.user)
@@ -491,26 +652,56 @@ def complete_service(request, request_id):
         id=request_id,
         technician=tech_profile
     )
-
+    company_user = service_request.company.user.id
+    
     if request.method == 'POST':
         extra_charges_input = request.POST.get('extra_charges', '').strip()
-        print("input",extra_charges_input)
         try:
             extra_charges = Decimal(extra_charges_input) if extra_charges_input else Decimal(0)
         except:
             extra_charges = Decimal(0)
-
-        print("extra",extra_charges)
+            
         service_request.extra_charges = extra_charges
         service_request.actual_price = service_request.base_price + extra_charges
-        service_request.status = 'completed'
-        service_request.save()
+        
+        if extra_charges > 0:
+            service_request.status = 'completed'
+            message = f"{tech_profile.name} has completed {service_request.service_type.name} service for {service_request.customer.cust_name} with extra charges. Approval required."
+            create_notification.delay(company_user, message)
+            messages.success(request, "Service marked as completed. Waiting for company approval due to extra charges.")
+        else:
+            service_request.status = 'payment_pending'
+            cust_user_id = service_request.customer.user.id
+            cust_message = f"{service_request.title} service is completed. Please make the payment."
+            create_notification.delay(cust_user_id, cust_message)
+            comp_message = f"{tech_profile.name} has completed {service_request.service_type.name} service for {service_request.customer.cust_name}. Payment pending."
+            create_notification.delay(company_user, comp_message)
+            
+            messages.success(request, "Service completed. Customer has been notified for payment.")
 
-       
+        service_request.save()
         tech_profile.status = 'available'
         tech_profile.save()
-
-        messages.success(request, "Service marked as completed and sent for admin approval.")
+        
         return redirect('technician_dashboard')
 
     return redirect('technician_dashboard')
+
+@login_required
+def notifications(request):
+    notifications = Notification.objects.filter(
+        user=request.user, is_read=False).order_by('-created_at')
+    data = [
+        {"message": n.message, "created_at": n.created_at.strftime("%b %d, %H:%M"), "read": n.is_read}
+        for n in notifications
+    ]
+    unread_count = notifications.count()
+    return JsonResponse({"notifications": data,"unread_count":unread_count})
+
+
+@login_required
+@require_POST
+def mark_notifications_read(request):
+    Notification.objects.filter(
+        user=request.user, is_read=False).update(is_read=True)
+    return JsonResponse({"status": "ok"})

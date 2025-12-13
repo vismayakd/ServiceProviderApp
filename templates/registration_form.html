@@ -2,77 +2,127 @@
 {% load crispy_forms_tags %}
 {% load static %}
 {% block content %}
+
 <style>
-  html,
-  body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-  }
+    body {
+        background: 
+            linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
+            url("{% static 'images/register.jpg' %}") center/cover no-repeat fixed;
+        padding-top: 80px; /* space for navbar */
+    }
 
- .bg-cover {
-    background: url("{% static 'images/register.jpg' %}") center/cover no-repeat;
-  }
+    .reg-card {
+        max-width: 600px;
+        width: 95%;
+        border-radius: 12px;
+        backdrop-filter: blur(5px);
+        background: rgba(255, 255, 255, 0.9);
+    }
 
-  .form-control,
-  .form-select {
-    border-radius: 10px;
-    padding: 10px;
-  }
+    .form-control,
+    .form-select {
+        border-radius: 8px;
+        padding: 10px;
+    }
 
-  .form-control,
-  .form-label {
-    color: black
-  }
+    label {
+        font-weight: 600;
+        color: #222;
+    }
 
-  button {
-    margin: auto;
-    align-items: center;
-  }
-
-  .navbar {
-    background-color: rgb(74, 2, 26);
-  }
+    .btn-custom {
+        background-color: #0d6efd;
+        font-weight: bold;
+        padding: 10px 0;
+    }
 </style>
-<nav class="navbar navbar-expand-lg navbar-dark ">
-  <div class="container ms-2">
-    <a class="navbar-brand fw-bold" href="{% url 'home' %}">
-      <img src="{% static 'images/logo.jpg' %}" class="rounded" alt="Logo" style="width: 50px; height: 50px;">
-      ServiceConnect
-    </a>
-  </div>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg fixed-top" style="background-color: rgb(18, 0, 0);">
+    <div class="container">
+
+        <a class="navbar-brand fw-bold d-flex align-items-center text-white" href="{% url 'home' %}">
+            <img src="{% static 'images/logo.jpg' %}" class="rounded me-2" alt="Logo"
+                 style="width: 45px; height: 45px;">
+            ServiceConnect
+        </a>
+
+        <button class="navbar-toggler text-white" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
+                aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+            <ul class="navbar-nav align-items-center">
+
+                <li class="nav-item mx-2">
+                    <a class="nav-link text-white fw-semibold" href="{% url 'home' %}">Home</a>
+                </li>
+
+                <li class="nav-item mx-2">
+                    <a class="nav-link text-white fw-semibold" href="{% url 'add_customer' %}">Register</a>
+                </li>
+
+                <li class="nav-item mx-2">
+                    <a class="nav-link text-white fw-semibold" href="{% url 'login' %}">Login</a>
+                </li>
+
+                <li class="nav-item ms-2">
+                    <a class="btn btn-outline-light px-3" href="{% url 'add_company' %}">
+                        Register Company
+                    </a>
+                </li>
+
+            </ul>
+        </div>
+    </div>
 </nav>
+<div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+    <div class="card shadow p-4 reg-card">
 
+        {% if title == 'company' %}
+        <h3 class="text-center mb-4 fw-bold text-dark">Company Registration</h3>
+        {% elif title == 'customer' %}
+        <h3 class="text-center mb-4 fw-bold text-dark">Customer Registration</h3>
+        {% endif %}
 
-<div class="min-vh-100 d-flex justify-content-center align-items-center bg-cover">
-  <div class="card shadow p-4 mt-4" style="max-width: 600px; width: 95%;">
-      
-      {% if title == 'company' %}
-      <h3 class="text-center mb-4 fw-bold text-dark">Company Registration</h3>
-      {% elif title == 'customer' %}
-      <h3 class="text-center mb-4 fw-bold text-dark">Customer Registration</h3>
-      {% endif %}
+        <form method="POST" enctype="multipart/form-data" autocomplete="off">
+            {% csrf_token %}
 
-      <form method="POST" enctype="multipart/form-data" autocomplete="off">
-        {% csrf_token %}
-      
-        {% for field in form %}
-          <div class="mb-3">
-            <label class="form-label">{{ field.label }}</label>
-            {{ field }}
-            {% if field.errors %}
-              <div class="text-danger small">{{ field.errors|striptags }}</div>
-            {% endif %}
-          </div>
-        {% endfor %}
+            {% for field in form %}
+              {% if field.is_hidden %}
+                  {{ field }}
+              {% else %}
+                  <div class="mb-3">
+                      <label class="form-label">
+                          {{ field.label }}
+                          {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                      </label>
+                      {{ field }}
+                      {% if field.errors %}
+                          <div class="text-danger small">{{ field.errors|striptags }}</div>
+                      {% endif %}
+                  </div>
+              {% endif %}
+            {% endfor %}
 
-        <button type="submit" class="btn btn-primary w-100 fw-bold">Register</button>
-      </form>
+            <button type="submit" class="btn btn-primary btn-custom w-100">Register</button>
+        </form>
 
-  </div>
+    </div>
 </div>
 
-
-
-
 {% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+

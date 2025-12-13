@@ -12,11 +12,10 @@
     }
 
     body {
-
-        background-image: url("{% static 'images/login.jpg' %}");
-        background-size: cover;
-        background-repeat: no-repeat;
-        background-position: center;
+        background: 
+            linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
+            url("{% static 'images/login.jpg' %}") center/cover no-repeat;
+       
     }
 
     .login-card {
@@ -33,9 +32,7 @@
         padding: 20px;
     }
 
-    .navbar {
-        background-color: rgb(74, 2, 26);
-    }
+   
      @media (max-width: 992px) {
         .card {
             width: 50%;
@@ -50,25 +47,49 @@
     }
 
 </style>
-<nav class="navbar navbar-expand-lg navbar-dark  ">
-    <div class="container ms-2">
-        <a class="navbar-brand fw-bold" href="{% url 'home' %}">
-            <img src="{% static 'images/logo.jpg' %}" class="rounded" alt="Logo" style="width: 50px; height: 50px;">
+<nav class="navbar navbar-expand-lg fixed-top" style="background-color: rgb(18, 0, 0);">
+    <div class="container">
+
+        <a class="navbar-brand fw-bold d-flex align-items-center text-white" href="{% url 'home' %}">
+            <img src="{% static 'images/logo.jpg' %}" class="rounded me-2" alt="Logo"
+                 style="width: 45px; height: 45px;">
             ServiceConnect
         </a>
+
+        <button class="navbar-toggler text-white" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
+                aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+            <ul class="navbar-nav align-items-center">
+
+                <li class="nav-item mx-2">
+                    <a class="nav-link text-white fw-semibold" href="{% url 'home' %}">Home</a>
+                </li>
+
+                <li class="nav-item mx-2">
+                    <a class="nav-link text-white fw-semibold px-3" href="{% url 'add_customer' %}">Register</a>
+                </li>
+
+                <li class="nav-item mx-2">
+                    <a class="nav-link text-white fw-semibold px-3" href="{% url 'login' %}">Login</a>
+                </li>
+                <li class="nav-item mx-2">
+                    <a class="btn btn-outline-light px-3" href="{% url 'add_company' %}">
+                        Register Company
+                    </a>
+                </li>
+
+            </ul>
+        </div>
+
     </div>
 </nav>
-{% if messages %}
-<div class="container mt-3">
-    {% for message in messages %}
-    <div class="alert {{ message.tags }} alert-dismissible fade show text-center" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
-<div class="login-card">
+
+
+<div class="login-card mt-4">
     <div class="card p-4 shadow-lg mb-4">
         <div class="text-center mb-4">
             <h3 class="fw-bold">Login</h3>
@@ -89,5 +110,15 @@
         </form>
     </div>
 </div>
+{% if messages %}
+<div class="container mt-3">
+    {% for message in messages %}
+    <div class="alert {{ message.tags }} alert-dismissible fade show text-center" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 
 {% endblock %}

@@ -22,16 +22,18 @@
             background-color: white;
 
         }
+
         .sidebar {
             position: fixed;
             top: 0;
             left: 0;
             height: 100vh;
             width: 250px;
-            background-color: rgb(74, 2, 26);
+            background-color: rgb(18, 0, 0);
             color: white;
             padding-top: 20px;
         }
+
         .sidebar h4 {
             text-align: center;
             margin-bottom: 50px;
@@ -53,6 +55,7 @@
             color: white;
             border-left: 4px solid white;
         }
+
         main {
             margin-top: 0;
             margin-right: 0;
@@ -69,16 +72,50 @@
             transform: scale(1.03);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
-        .customer{
+
+        .customer {
             font-size: medium;
             font-weight: bolder;
-            color:  rgb(74, 2, 26);
+            color: rgb(74, 2, 26);
         }
+
         .navbar-custom {
             margin-top: -20px;
             border-radius: 10px;
-            background-color:white;
+            background-color: white;
         }
+
+        .notif-dropdown {
+            width: 360px !important;
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 10px;
+            padding: 0;
+        }
+
+        .notif-dropdown .dropdown-header {
+            background: #f8f9fa;
+            color: #333;
+            padding: 10px 15px;
+            font-size: 1rem;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .notif-dropdown .dropdown-item {
+            white-space: normal;
+            padding: 10px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s;
+        }
+
+        .notif-dropdown .dropdown-item:hover {
+            background-color: #f1f1f1;
+        }
+
+        .notif-dropdown small {
+            font-size: 0.8rem;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 position: relative;
@@ -90,30 +127,30 @@
                 margin-left: 0;
                 padding: 15px;
             }
-            .table th, .table td {
-                padding: 0.3rem; 
+
+            .table th,
+            .table td {
+                padding: 0.3rem;
                 font-size: 0.85rem;
             }
         }
-
     </style>
 </head>
 
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light d-md-none">
         <div class="container-fluid">
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
-                data-bs-target="#mobileSidebar" aria-controls="mobileSidebar" 
-                aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileSidebar"
+                aria-controls="mobileSidebar" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
         </div>
     </nav>
     <div class="collapse d-md-block sidebar" id="mobileSidebar">
-        <img src="{% static 'images/logo.jpg' %}" 
-            class="rounded me-2 ms-2" alt="Logo" style="width: 50px; height: 50px;">ServiceConnect
-        
-        <a href="{% url 'customer_dashboard' %}" 
+        <img src="{% static 'images/logo.jpg' %}" class="rounded me-2 ms-2" alt="Logo"
+            style="width: 50px; height: 50px;">ServiceConnect
+
+        <a href="{% url 'customer_dashboard' %}"
             class="{% if request.resolver_match.url_name == 'customer_dashboard' %}active{% endif %}">
             <i class="bi bi-house-door me-2"></i>Dashboard
         </a>
@@ -123,15 +160,36 @@
     </div>
 
     <main>
-        
-        <nav class="navbar navbar-expand-lg  navbar-custom ">
-            <div class="container-fluid justify-content-end">
-            <div class="text-center ">
-                <i class="bi bi-person-circle fs-2 text-dark d-block"></i>
-                <span class="customer">{{request.user.customer_profile.cust_name}}</span>
-            </div>
+
+        <nav class="navbar navbar-expand-lg navbar-custom shadow-sm py-2">
+            <div class="container-fluid d-flex justify-content-between align-items-center px-4">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-person-circle fs-2 text-dark me-2"></i>
+                    <span class="customer fw-bold text-dark">{{ request.user.customer_profile.cust_name }}</span>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-light position-relative border-0 shadow-sm" id="notifBell"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-bell fs-4 text-dark"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                            id="notifCount">
+                            0
+                        </span>
+                    </button>
+
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg notif-dropdown" id="notifList">
+                        <li class="dropdown-header fw-bold">Notifications</li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li class="text-center text-muted py-3">No new notifications</li>
+                    </ul>
+                </div>
+
             </div>
         </nav>
+
+
 
         {% if messages %}
         <div class="container mt-3">
@@ -144,15 +202,87 @@
         </div>
         {% endif %}
 
-     
+
         {% block content %}
         {% endblock %}
-       
+
 
     </main>
-    
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const notifBell = document.getElementById('notifBell');
+        const notifCount = document.getElementById('notifCount');
+        const notifList = document.getElementById('notifList');
+
+        function loadNotifications() {
+            fetch('/notifications/', { credentials: 'include' })
+                .then(response => response.json())
+                .then(data => {
+                    const notifications = data.notifications || [];
+                    notifCount.textContent = data.unread_count || 0;
+
+                    notifList.innerHTML = `
+                    <li class="dropdown-header fw-bold bg-warning">Notifications</li>
+                    <li><hr class="dropdown-divider"></li>
+                `;
+
+                    if (notifications.length === 0) {
+                        notifList.innerHTML += '<li class="text-center text-muted">No new notifications</li>';
+                    } else {
+                        notifications.forEach(n => {
+                            notifList.innerHTML += `
+                            <li>
+                                <a class="dropdown-item small text-dark" href="#">
+                                    ${n.message}<br>
+                                    <small class="text-muted">${n.created_at}</small>
+                                </a>
+                            </li>
+                        `;
+                        });
+                    }
+                })
+                .catch(err => console.error('Error loading notifications:', err));
+        }
+
+        notifBell.addEventListener('click', function () {
+
+            loadNotifications();
+
+            setTimeout(() => {
+                fetch('/notifications/mark-read/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                })
+                    .then(() => {
+                        notifCount.textContent = 0;
+                    })
+                    .catch(err => console.error('Error marking read:', err));
+            }, 5000);
+        });
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        setInterval(loadNotifications, 10000);
+        loadNotifications();
+    </script>
 </body>
 
 </html>

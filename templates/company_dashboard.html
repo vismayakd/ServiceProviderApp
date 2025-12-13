@@ -2,220 +2,341 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
+<style>
+    .card{
+        background-color: rgb(242, 240, 238);
+    }
+    .card-hover {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
 
-<h4 class="fw-bold mb-4 text-dark ms-2">
-    <i class="bi bi-speedometer2 me-2"></i>Dashboard Overview
-</h4>
+    .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
+        cursor: pointer;
+        border-color: var(--bs-primary) !important;
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+    }
 
-{% if requests %}
-<div class="card shadow-sm border-0 m-2">
-    <div class="card-body">
-        <h5 class="mb-3 fw-semibold">All Service Requests</h5>
+    .icon-box {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        font-size: 1.5rem;
+    }
 
-        <div class="table-responsive">
-            <table class="table table-hover table-bordered align-middle">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Customer</th>
-                        <th>Location</th>
-                        <th>Service Type</th>
-                        <th>Technician</th>
-                        <th>Status</th>
-                        <th>Preferred Date</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for req in requests %}
-                    <tr>
-                        <td>{{ req.customer.cust_name }}</td>
-                        <td>{{ req.customer.address }}</td>
-                        <td>{{ req.service_type.name }}</td>
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 0, 0, .02);
+    }
+    table thead th {
+        background-color: #212529 !important;
+        color: #ffffff !important;
+        border-color: #373b3e !important;
+    }
 
-                        <td>
-                            {% if req.technician %}
-                                {{ req.technician.name }}
-                            {% else %}
-                                <span class="text-secondary">Not Assigned</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <span class="badge p-2
-                                {% if req.status == 'completed' %}
-                                    bg-success
-                                {% elif req.status == 'assigned' %}
-                                    bg-primary
-                                {% elif req.status == 'accepted' %}
-                                    bg-info
-                                {% elif req.status == 'Proceeding' %}
-                                    bg-warning text-dark
-                                {% elif req.status == 'cancelled' %}
-                                    bg-danger
-                                {% elif req.status == 'payment_pending' %}
-                                    bg-light text-dark
-                                {% elif req.status == 'paid' %}
-                                    bg-success
+    .status-badge {
+        font-size: 0.95rem;
+        padding: 0.5em 0.8em;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+</style>
+
+
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold mb-1">Dashboard Overview</h4>
+        </div>
+
+    </div>
+    <div class="row g-3 mb-5">
+        {% for key, label, icon, color in status_cards %}
+        <div class="col-xl-3 col-md-6">
+            <a href="?status={{ key }}#requests-table" class="text-decoration-none">
+                <div
+                    class="card border-0 shadow-sm h-100 card-hover status-{{ color }} {% if selected_status == key %}ring-2 ring-{{ color }}{% endif %}">
+                    <div class="card-body text-center">
+                        <div class="icon-box bg-{{ color }} bg-opacity-10 text-{{ color }} mx-auto mb-3">
+                            <i class="bi {{ icon }}"></i>
+                        </div>
+                        <h2 class="fw-bold mb-2 text-dark">
+                            {% for k, v in count.items %}
+                            {% if k == key %}{{ v }}{% endif %}
+                            {% endfor %}
+                        </h2>
+                        <span class="badge bg-{{ color }} bg-opacity-10 text-{{ color }} rounded-pill mb-2 p-2">
+                            {{ label }}
+                        </span>
+                        
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+
+    <div class="card border-0 shadow-sm " id="requests-table">
+        <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">
+                {% if selected_status %}
+                    Showing {{ selected_status|title }} Requests
+                {% else %}
+                    All Service Requests
+                {% endif %}
+            </h5>
+            {% if selected_status %}
+            <a href="{% url 'company_dashboard' %}" class="btn btn-sm btn-light text-primary fw-medium">
+                <i class="bi bi-list-ul me-1"></i> Show All
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="card-body p-0">
+            {% if requests %}
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle mb-0">
+                   <thead class="text-uppercase text-secondary small fw-bold">
+                        <tr>
+                            <th class="ps-4">Customer</th>
+                            <th>Service Details</th>
+                            <th>Technician</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th class="text-end pe-4">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in requests %}
+                        <tr class="border-bottom">
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div>
+                                        <h6 class="mb-0 fw-semibold text-dark">{{ req.customer.cust_name }}</h6>
+                                        <small class="text-muted">{{ req.customer.phone}}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="fw-medium text-dark">{{ req.service_type.name }}</span>
+        
+                            </td>
+                            <td>
+                                {% if req.technician %}
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-person-circle text-secondary me-2"></i>
+                                    <span>{{ req.technician.name }}</span>
+                                </div>
                                 {% else %}
-                                    bg-secondary
+                                <span
+                                    class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-10">Unassigned</span>
                                 {% endif %}
-                                ">
-                                {{ req.get_status_display }}
-                            </span>
-                        </td>
-                        <td>{{ req.preferred_date}}</td>
-                        <td>
-                            {% if req.status == 'requested' %}
-                            <a href="{% url 'assign_technician' req.id %}" class="btn btn-sm btn-outline-primary">Assign
-                            </a>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center text-muted">
+                                    <i class="bi bi-calendar3 me-2"></i>
+                                    {{ req.preferred_date|date:"M d, Y" }}
+                                </div>
+                            </td>
+                            <td>
+                                {% if req.status == 'requested' %}
+                                <span class="status-badge bg-primary bg-opacity-10 text-primary">Requested</span>
+                                {% elif req.status == 'assigned' %}
+                                <span class="status-badge bg-info bg-opacity-10 text-info">Assigned</span>
+                                {% elif req.status == 'accepted' %}
+                                <span class="status-badge bg-success bg-opacity-10 text-success">Accepted</span>
+                                {% elif req.status == 'Proceeding' %}
+                                <span class="status-badge bg-warning bg-opacity-10 text-warning">In Progress</span>
+                                {% elif req.status == 'completed' %}
+                                <span class="status-badge bg-success text-white">Completed</span>
+                                {% elif req.status == 'payment_pending' %}
+                                <span class="status-badge bg-danger bg-opacity-10 text-danger">Payment Pending</span>
+                                {% elif req.status == 'paid' %}
+                                <span class="status-badge bg-success bg-opacity-10 text-success">Paid</span>
+                                {% elif req.status == 'rejected' %}
+                                <span class="status-badge bg-danger bg-opacity-10 text-danger">Rejected</span>
+                                {% else %}
+                                <span class="status-badge bg-secondary bg-opacity-10 text-secondary">{{ req.status|title}}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                {% if req.status == 'requested' %}
+                                <a href="{% url 'assign_technician' req.id %}"
+                                    class="btn btn-sm btn-primary px-3">Assign</a>
+                                {% elif req.status == 'completed' %}
+                                <button class="btn btn-sm btn-success px-3" data-bs-toggle="modal"
+                                    data-bs-target="#paymentPendingModal{{ req.id }}">
+                                    Approve
+                                </button>
+                                
+                                {% elif req.status == 'paid' %}
+                                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+                                    data-bs-target="#feedbackModal{{ req.id }}">
+                                    Feedback
+                                </button>
+                                {% elif req.status == 'Proceeding' %}
+                                <button class="btn btn-sm btn-light text-muted" disabled>NA</button>
+                                {% elif req.status == 'payment_pending' or req.status == 'accepted' %}
+                                <button class="btn btn-sm btn-light text-muted" disabled>NA</button>
+                                {% elif req.status == 'rejected' or req.status == 'assigned' %}
+                                <a href="{% url 'assign_technician' req.id %}"
+                                    class="btn btn-sm btn-outline-warning">Reassign</a>
+                                 
+                                {% else %}
+                                <button class="btn btn-sm btn-light text-muted" disabled>View</button>
+                                {% endif %}
 
-                            {% elif req.status == 'assigned' %}
-                            <p class="text-muted mb-0 fw-semibold">Awaiting Technician Response</p>
+     
+                                {% if req.status == 'completed' %}
+                                <div class="modal fade" id="paymentPendingModal{{ req.id }}" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content border-0 shadow">
+                                            <form method="post" action="{% url 'mark_payment_pending' req.id %}">
+                                                {% csrf_token %}
+                                                <div class="modal-header border-0 pb-0">
+                                                    <h5 class="modal-title fw-bold">Confirm Completion</h5>
+                                                    <button type="button" class="btn-close"
+                                                        data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body text-start">
+                                                    <div
+                                                        class="alert alert-success bg-success bg-opacity-10 border-0 text-success mb-3">
+                                                        <i class="bi bi-check-circle-fill me-2"></i> Technician marked
+                                                        as completed.
+                                                    </div>
+                                                    <div class="p-3 bg-light rounded-3 mb-3">
+                                                        <div class="d-flex justify-content-between mb-2">
+                                                            <span class="text-muted">Base Price:</span>
+                                                            <span class="fw-medium">{{ req.base_price }}</span>
+                                                        </div>
+                                                        <div class="d-flex justify-content-between mb-2">
+                                                            <span class="text-muted">Extra Charges:</span>
+                                                            <span class="fw-medium">{{ req.extra_charges }}</span>
+                                                        </div>
+                                                        <div class="border-top my-2"></div>
+                                                        <div class="d-flex justify-content-between">
+                                                            <span class="fw-bold">Total Amount:</span>
+                                                            <span class="fw-bold text-success">₹{{ req.actual_price}}</span>
+                                                        </div>
+                                                    </div>
+                                                    <p class="small text-muted mb-0">Allow customer to proceed with
+                                                        payment?</p>
+                                                </div>
+                                                <div class="modal-footer border-0 pt-0">
+                                                    <button type="button" class="btn btn-light"
+                                                        data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-success px-4">Confirm</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
 
-                            {% elif req.status == 'accepted' %}
-                            <p class="text-muted mb-0 fw-semibold">Job Scheduled</p>
-
-                            {% elif req.status == 'Proceeding' %}
-                            <p class="text-info mb-0 fw-semibold">Work in Progress</p>
-                            {% elif req.status == 'completed'%}
-                            <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal"
-                                data-bs-target="#paymentPendingModal{{ req.id }}">
-                                Allow Payment
-                            </button>
-                            <div class="modal fade" id="paymentPendingModal{{ req.id }}" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <form method="post" action="{% url 'mark_payment_pending' req.id %}">
-                                            {% csrf_token %}
-                                            <div class="modal-header bg-success text-white">
-                                                <h5 class="modal-title">Allow Customer Payment</h5>
+                                {% if req.status == 'paid' %}
+                                <div class="modal fade" id="feedbackModal{{ req.id }}" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content border-0 shadow-lg rounded-4">
+                                            <div class="modal-header border-0 bg-light rounded-top-4">
+                                                <h5 class="modal-title fw-bold">Customer Feedback</h5>
                                                 <button type="button" class="btn-close"
                                                     data-bs-dismiss="modal"></button>
                                             </div>
-                                            <div class="modal-body text-start">
-                                                <p><strong>Customer : </strong> {{ req.customer.cust_name }}</p>
-                                                <p><strong>Service : </strong> {{ req.service_type.name }}</p>
-                                                <p><strong>Base Price : </strong> {{ req.base_price }}</p>
-                                                <p><strong>Extra charge : </strong> {{ req.extra_charges }}</p>
-                                                <p><strong>Total amount : </strong>
-                                                    ₹{{req.actual_price }}</p>
-                                                <p class="mt-3">
-                                                    The technician has marked this service as <b>completed</b>.
-                                                    Do you want to confirm completion and allow the customer to proceed
-                                                    with payment?
-                                                </p>
+                                            <div class="modal-body text-center py-4">
+                                                {% if req.feedback %}
+                                                <div class="mb-3">
+                                                    <div class="avatar-initials bg-primary text-white rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2"
+                                                        style="width: 50px; height: 50px; font-size: 1.2rem;">
+                                                        {{ req.customer.cust_name|slice:":1"|upper }}
+                                                    </div>
+                                                    <h6 class="fw-bold mb-0">{{ req.customer.cust_name }}</h6>
+                                                </div>
+                                                <div class="mb-3">
+                                                    {% for i in "12345" %}
+                                                    {% if forloop.counter <= req.rating %} <i
+                                                        class="bi bi-star-fill text-warning fs-5"></i>
+                                                        {% else %}
+                                                        <i class="bi bi-star text-muted opacity-25 fs-5"></i>
+                                                        {% endif %}
+                                                        {% endfor %}
+                                                </div>
+                                                <div class="p-3 bg-light rounded-3 fst-italic text-secondary">
+                                                    "{{ req.feedback }}"
+                                                </div>
+                                                {% else %}
+                                                <div class="text-center py-3">
+                                                    <i
+                                                        class="bi bi-chat-square-text text-muted opacity-25 display-4 mb-3"></i>
+                                                    <p class="text-muted mb-0">No feedback provided yet.</p>
+                                                </div>
+                                                {% endif %}
                                             </div>
-                                            <div class="modal-footer">
-                                                <button type="submit" class="btn btn-success">Confirm</button>
-                                                <button type="button" class="btn btn-secondary"
-                                                    data-bs-dismiss="modal">Cancel</button>
-                                            </div>
-
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                            {% elif req.status == 'payment_pending' %}
-                            <p class="text-info mb-0 fw-semibold">Awaiting Customer Payment</p>
-
-                            {% elif req.status == 'paid' %}
-                            <div class="d-flex flex-column align-items-start gap-2">
-                                <p class="text-success mb-0 fw-semibold">Payment received </p>
-
-
-                                <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal"
-                                    data-bs-target="#feedbackModal{{ req.id }}">
-                                    View Feedback
-                                </button>
-                            </div>
-                            <div class="modal fade" id="feedbackModal{{ req.id }}" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content rounded-4 shadow-lg">
-                                        <div class="modal-header bg-info text-white">
-                                            <h5 class="modal-title">Customer Feedback</h5>
-                                            <button type="button" class="btn-close btn-close-white"
-                                                data-bs-dismiss="modal"></button>
-                                        </div>
-
-                                        <div class="modal-body text-center">
-                                            {% if req.feedback %}
-                                            <p class="fw-bold text-dark mb-2">{{ req.customer.cust_name|title }}</p>
-
-
-                                            <div class="mb-3">
-                                                {% for i in "12345" %}
-                                                    {% if forloop.counter <= req.rating %}
-                                                        <i class="bi bi-star-fill text-warning"></i> 
-                                                    {% else %}
-                                                        <i class="bi bi-star text-muted"></i>       
-                                                    {% endif %}
-                                                {% endfor %}
-                                            </div>
-
-
-                                            <p class="text-muted fst-italic">
-                                                {{ req.feedback }}
-                                            </p>
-
-                                            {% else %}
-                                            <p class="text-secondary">No feedback available yet.</p>
-                                            {% endif %}
-                                        </div>
-
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary"
-                                                data-bs-dismiss="modal">Close</button>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
-                            {% elif req.status == 'rejected' %}
-                            <a href="{% url 'assign_technician' req.id %}"
-                                class="btn btn-sm btn-outline-warning ">Reassign </a>
-
-                            {% else %}
-                            <span class="text-muted">N/A</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-
-
-            <div class="d-flex justify-content-center mt-4">
+            {% if requests.paginator.num_pages > 1 %}
+            <div class="d-flex justify-content-center py-3 border-top">
                 <nav>
-                    <ul class="pagination">
+                    <ul class="pagination pagination-sm mb-0">
                         {% if requests.has_previous %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ requests.previous_page_number }}">Previous</a>
+                            <a class="page-link border-0 text-secondary"
+                                href="?page={{ requests.previous_page_number }}{% if selected_status %}&status={{ selected_status }}{% endif %}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
                         </li>
                         {% endif %}
 
                         {% for num in requests.paginator.page_range %}
-                            {% if requests.number == num %}
-                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                            {% else %}
-                                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-                            {% endif %}
+                        {% if requests.number == num %}
+                        <li class="page-item active"><span class="page-link border-0 bg-primary shadow-sm">{{ num}}</span></li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link border-0 text-secondary"
+                                href="?page={{ num }}{% if selected_status %}&status={{ selected_status }}{% endif %}">{{num }}</a>
+                        </li>
+                        {% endif %}
                         {% endfor %}
 
                         {% if requests.has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ requests.next_page_number }}">Next</a>
+                            <a class="page-link border-0 text-secondary"
+                                href="?page={{ requests.next_page_number }}{% if selected_status %}&status={{ selected_status }}{% endif %}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
                         </li>
                         {% endif %}
                     </ul>
                 </nav>
             </div>
+            {% endif %}
+
+            {% else %}
+            <div class="text-center py-5">
+                <div class="mb-3">
+                    <i class="bi bi-inbox text-muted opacity-25 display-1"></i>
+                </div>
+                <h5 class="text-muted fw-normal">No requests found</h5>
+                {% if selected_status %}
+                <p class="text-muted small">Try selecting a different status or <a
+                        href="{% url 'company_dashboard' %}">view all</a>.</p>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
     </div>
-
 </div>
-{% else %}
-<div class="alert alert-warning text-center shadow-sm my-2">
-    No requests found yet.
-</div>
-{% endif %}
-
 {% endblock %}

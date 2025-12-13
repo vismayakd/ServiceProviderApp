@@ -15,7 +15,7 @@ class CompanyRegistrationForm(UserCreationForm):
 
     phone = forms.CharField(
         label='Phone',
-        max_length=15,
+        max_length=10,
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
 
@@ -63,57 +63,120 @@ class CompanyRegistrationForm(UserCreationForm):
             'username', 'password1', 'password2'
         ]
 
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if not phone.isdigit() or len(phone) != 10:
+            raise forms.ValidationError("Phone number must be exactly 10 digits.")
+        return phone
 
 class CustomerRegistrationForm(UserCreationForm):
+
     cust_name = forms.CharField(
         label='Customer Name',
         max_length=100,
+        required=True,
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
 
     phone = forms.CharField(
         label='Phone',
-        max_length=15,
+        max_length=10,
+        required=True,
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
 
     email = forms.EmailField(
         label='Email',
+        required=True,
         widget=forms.EmailInput(attrs={'class': 'form-control'})
     )
-
-    address = forms.CharField(
-        label='Address',
-        widget=forms.Textarea(
-            attrs={
-                'rows': 3,
-                'class': 'form-control',
-                'style': 'resize: vertical; width:100%; box-sizing:border-box;'
-            }
-        )
+    street = forms.CharField(
+        label="Street",
+        max_length=150,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
     )
+
+    city = forms.CharField(
+        label="City",
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
+    state = forms.CharField(
+        label="State",
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
+    pincode = forms.CharField(
+        label="Pincode",
+        max_length=10,
+        required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
+    country = forms.CharField(
+        label="Country",
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
+    address = forms.CharField(required=False, widget=forms.HiddenInput())
 
     username = forms.CharField(
         label='Username',
+        required=True,
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
 
     password1 = forms.CharField(
         label='Password',
+        required=True,
         widget=forms.PasswordInput(attrs={'class': 'form-control'})
     )
 
     password2 = forms.CharField(
         label='Confirm Password',
+        required=True,
         widget=forms.PasswordInput(attrs={'class': 'form-control'})
     )
+
 
     class Meta:
         model = User
         fields = [
-            'cust_name', 'phone', 'email', 'address',
+            'cust_name', 'phone', 'email',
+            'street', 'city', 'state', 'pincode', 'country',
             'username', 'password1', 'password2'
         ]
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if not phone.isdigit() or len(phone) != 10:
+            raise forms.ValidationError("Phone number must be exactly 10 digits.")
+        return phone
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+
+        full_address = (
+            f"{self.cleaned_data.get('street', '')}, "
+            f"{self.cleaned_data.get('city', '')}, "
+            f"{self.cleaned_data.get('state', '')} - "
+            f"{self.cleaned_data.get('pincode', '')}, "
+            f"{self.cleaned_data.get('country', '')}"
+        ).strip(", - ")
+
+        user.address = full_address
+        if commit:
+            user.save()
+
+        return user
+
 
 
 

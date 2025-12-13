@@ -1,59 +1,97 @@
 {% extends 'company_base.html' %}
 {% block content %}
+<style>
+  .tech-card {
+      background: #f7f5f5;
+      border: 1px solid #e6e6e6;
+      border-radius: 16px;
+      transition: all .25s ease;
+  }
+  .tech-card:hover {
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+      transform: translateY(-4px);
+  }
+  .duties-box {
+      background: #f8f9fa;
+      border: 1px solid #e3e6e9;
+      border-radius: 10px;
+      max-height: 120px;
+      overflow-y: auto;
+  }
+  .same-day-badge {
+      background: #fff3cd;
+      color: #856404;
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-weight: 600;
+  }
+  .assign-btn {
+      border-radius: 8px;
+      font-weight: 600;
+  }
+  .job-count {
+      font-size: 12px;
+      color: #6c757d;
+      background: #eef3ff;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+  }
+</style>
 
 <div class="container my-5">
-  <h3 class="text-center mb-4 text-primary fw-bold">
-    Assign Technician for {{ service_request.service_type.name }}
+  <h3 class="text-center mb-1 text-dark fw-bold">
+    Assign Technician
   </h3>
-  <p class="text-center text-muted mb-5">
-    Preferred Date: <b>{{ service_request.preferred_date }}</b>
+  <p class="text-center text-muted mb-4">
+    Service: <b class="text-dark">{{ service_request.service_type.name }}</b> |
+    Preferred Date: <b class="text-primary">{{ service_request.preferred_date }}</b>
   </p>
 
   <div class="row g-4">
     {% for item in tech_data %}
     <div class="col-md-4">
-      <div class="card shadow-sm h-100 border-0 rounded-4">
-        <div class="card-body d-flex flex-column">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-              <h5 class="card-title mb-1 fw-bold">{{ item.tech.name }}</h5>
-              <p class="text-muted small mb-0">{{ item.tech.phone }}</p>
-            </div>
-          </div>
+      <div class="tech-card h-100 p-4">
 
-          {% if item.duties %}
-          <div class="duties-box mb-3 p-2 border rounded bg-light small" style="max-height: 120px; overflow-y: auto;">
-            <p class="fw-semibold text-primary mb-1">All Jobs:</p>
-            <ul class="list-unstyled mb-0">
-              {% for d in item.duties %}
-              <li class="mb-1">
-                <span class="fw-semibold">{{ d.service_type.name }}</span> —
-                {{ d.preferred_date }}
-                <small class="text-muted">({{ d.get_status_display }})</small>
-                {% if d.preferred_date == service_request.preferred_date %}
-                <span class="badge bg-warning text-dark ms-1">Same Day</span>
-                {% endif %}
-              </li>
-              {% endfor %}
-            </ul>
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <h5 class="fw-bold mb-1">{{ item.tech.name }}</h5>
+            <p class="text-muted small mb-0"><i class="bi bi-telephone me-1"></i>{{ item.tech.phone }}</p>
           </div>
-          {% else %}
-          <p class="text-success small mb-3">No jobs available.</p>
-          {% endif %}
-
-          <form method="POST" class="mb-0">
-            {% csrf_token %}
-            <input type="hidden" name="technician" value="{{ item.tech.id }}">
-            <button type="submit" class="btn btn-primary w-50 rounded-3 ">
-              Assign
-            </button>
-          </form>
+          <span class="job-count">{{ item.duties|length }} Jobs</span>
         </div>
+
+        {% if item.duties %}
+        <div class="duties-box p-2 mb-3 small">
+          <p class="fw-semibold text-primary mb-1 border-bottom pb-1">Upcoming Jobs</p>
+          <ul class="list-unstyled mb-0">
+            {% for d in item.duties %}
+            <li class="mb-2">
+              <b>{{ d.service_type.name }}</b> — {{ d.preferred_date }}
+              <span class="text-muted">({{ d.get_status_display }})</span>
+              {% if d.preferred_date == service_request.preferred_date %}
+              <span class="same-day-badge ms-1">Same Day</span>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% else %}
+        <p class="text-success small mb-4"><i class="bi bi-check-circle"></i> Free — No jobs assigned</p>
+        {% endif %}
+
+        <form method="POST" class="mt-auto text-center">
+          {% csrf_token %}
+          <input type="hidden" name="technician" value="{{ item.tech.id }}">
+          <button type="submit" class="btn btn-primary px-4 assign-btn w-75">
+            Assign Technician
+          </button>
+        </form>
+
       </div>
     </div>
     {% endfor %}
   </div>
 </div>
-
-
 {% endblock %}

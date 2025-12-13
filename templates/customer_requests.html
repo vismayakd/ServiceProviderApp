@@ -2,67 +2,138 @@
 {% load static %}
 {% block content %}
 
+<style>
+  .filter-card {
+    border-radius: 15px;
+  }
+  .status-select {
+    max-width: 260px;
+  }
+  .table th {
+    white-space: nowrap;
+  }
+  .table-hover tbody tr:hover {
+    background-color: #f5f8ff;
+  }
+</style>
 
-{% if requests %}
-<div class="card shadow-sm border-0 m-2">
+<div class="container mt-4">
+
+  <div class="card shadow-sm border-0 p-3 filter-card mb-3">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-md-4 col-sm-12">
+        <label class="fw-semibold mb-1">Filter by Status:</label>
+        <select name="status" class="form-select status-select">
+          <option value="">All</option>
+          <option value="requested" >Requested</option>
+          <option value="assigned" >Assigned</option>
+          <option value="Proceeding">Proceeding</option>
+          <option value="completed" >Completed</option>
+          <option value="payment_pending">Payment Pending</option>
+          <option value="paid">Paid</option>
+        </select>
+      </div>
+      <div class="col-md-2 col-sm-6 mt-4 mt-3">
+        <button class="btn btn-primary w-100"><i class="bi bi-search"></i> Filter</button>
+      </div>
+      <div class="col-md-2 col-sm-6 mt-4 mt-3">
+        <a href="{% url 'my_requests' %}" class="btn btn-secondary w-100"><i class="bi bi-x-circle"></i> Reset</a>
+      </div>
+    </form>
+  </div>
+
+  {% if requests %}
+  <div class="card shadow-sm border-0">
     <div class="card-body">
-        <h5 class="mb-3 fw-semibold">My Requests</h5>
+      <h5 class="mb-3 fw-semibold">My Requests</h5>
 
-        <div class="table-responsive">
-            <table class="table table-hover table-bordered align-middle">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Company</th>
-                        <th>Service Type</th>
-                        <th>Technician</th>
-                        <th>Date</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for req in requests %}
-                    <tr>
-                        <td>{{ req.company.company_name }}</td>
-                        <td>{{ req.service_type.name }}</td>
-                        <td>
-                            {% if req.technician %}
-                                {{ req.technician.name }}
-                            {% else %}
-                                <span class="text-secondary">Not Assigned</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ req.preferred_date }}</td>
-                        <td>
-                            {% if req.status == 'payment_pending' %}
-                            <form method="post" action="{% url 'invoice' req.id%}" class="d-inline">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-sm btn-outline-success fw-semibold">
-                                    Make Payment
-                                </button>
-                            </form>
-                            {% elif req.status == 'paid' %}
-                            <span class="badge bg-success">Paid</span>
-                            {% elif req.status == 'requested' %}
-                            <span class="badge bg-secondary">Requested</span>
-                            {% elif req.status == 'assigned' %}
-                            <span class="badge bg-primary">Assigned</span>
-                            {% elif req.status == 'Proceeding' %}
-                            <span class="badge bg-warning text-dark">Proceeding</span>
-                            {% elif req.status == 'completed' %}
-                            <span class="badge bg-info text-dark">Completed</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+      <div class="table-responsive">
+        <table class="table table-hover table-bordered align-middle">
+          <thead class="table-dark">
+            <tr>
+              <th>Company</th>
+              <th>Service Type</th>
+              <th>Technician</th>
+              <th>Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
 
-        </div>
+          <tbody>
+            {% for req in requests %}
+            <tr>
+              <td>{{ req.company.company_name }}</td>
+              <td>{{ req.service_type.name }}</td>
+              <td>
+                {% if req.technician %}
+                {{ req.technician.name }}
+                {% else %}
+                <span class="text-secondary">Not Assigned</span>
+                {% endif %}
+              </td>
+              <td>{{ req.preferred_date }}</td>
+              <td>
+                {% if req.status == 'payment_pending' %}
+                <form method="post" action="{% url 'invoice' req.id %}">
+                  {% csrf_token %}
+                  <button class="btn btn-sm btn-outline-success fw-semibold">Make Payment</button>
+                </form>
+
+                {% elif req.status == 'paid' %}
+                <span class="badge bg-success">Paid</span>
+
+                {% elif req.status == 'requested' %}
+                <span class="badge bg-secondary">Requested</span>
+
+                {% elif req.status == 'assigned' %}
+                <span class="badge bg-primary">Assigned</span>
+
+                {% elif req.status == 'Proceeding' %}
+                <span class="badge bg-warning text-dark">Proceeding</span>
+
+                {% elif req.status == 'completed' %}
+                <span class="badge bg-info text-dark">Completed</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+
+        </table>
+      </div>
+
+      <nav>
+        <ul class="pagination justify-content-center mt-3">
+          {% if requests.has_previous %}
+          <li class="page-item"><a class="page-link" href="?page={{ requests.previous_page_number }}&status={{ request.GET.status }}">Previous</a></li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+          {% endif %}
+
+          {% for num in requests.paginator.page_range %}
+          {% if num == requests.number %}
+          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% else %}
+          <li class="page-item"><a class="page-link" href="?page={{ num }}&status={{ request.GET.status }}">{{ num }}</a></li>
+          {% endif %}
+          {% endfor %}
+
+          {% if requests.has_next %}
+          <li class="page-item"><a class="page-link" href="?page={{ requests.next_page_number }}&status={{ request.GET.status }}">Next</a></li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">Next</span></li>
+          {% endif %}
+        </ul>
+      </nav>
     </div>
+  </div>
+
+  {% else %}
+  <div class="alert alert-warning text-center shadow-sm my-4">
+    No requests found.
+  </div>
+  {% endif %}
+
 </div>
-{% else %}
-<div class="alert alert-warning text-center shadow-sm my-2">
-    No requests found yet.
-</div>
-{% endif %}
+
 {% endblock %}

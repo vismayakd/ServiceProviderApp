@@ -1,8 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
-# Create your models here.
+from django.core.validators import RegexValidator
 
+phone_validator = RegexValidator(
+    regex=r'^\d{10}$', 
+    message="Enter a valid 10-digit phone number."
+)
 
 class CustomUser(AbstractUser):
 
@@ -19,7 +23,8 @@ class CustomUser(AbstractUser):
 class CustomerProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='customer_profile')
     cust_name = models.CharField(max_length=100)
-    phone = models.CharField(max_length=15)
+    phone =models.CharField(
+        validators=[phone_validator], max_length=10, unique=True)
     address = models.TextField()
 
     def __str__(self):
@@ -29,7 +34,8 @@ class CustomerProfile(models.Model):
 class CompanyProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='company_profile')
     company_name = models.CharField(max_length=100)
-    phone = models.CharField(max_length=15)
+    phone = models.CharField(
+        validators=[phone_validator], max_length=10, unique=True)
     address = models.TextField()
     logo = models.ImageField(upload_to='company_logo/', blank=True, null=True)
 
@@ -50,7 +56,8 @@ class TechnicianProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='technician_profile')
     company = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE, related_name='company_technicians')
     name = models.CharField(max_length=100)
-    phone = models.CharField(max_length=15)
+    phone = models.CharField(
+        validators=[phone_validator], max_length=10, unique=True)
     service_types = models.ManyToManyField(ServiceType, related_name='service_technicians')
     STATUS_CHOICES = [
         ('available', 'Available'),
@@ -93,3 +100,11 @@ class ServiceRequest(models.Model):
     def __str__(self):
         return f"{self.customer.cust_name} -{self.service_type.name} - {self.company.company_name}"
 
+class Notification(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.message[:50]}"

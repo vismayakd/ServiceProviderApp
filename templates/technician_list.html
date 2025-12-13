@@ -14,15 +14,16 @@
         <select name="service" class="form-select w-auto me-2">
             <option value=""> All Services </option>
             {% for service in service_types %}
-           <option value="{{ service.id }}" {% if service.id|stringformat:"s" == selected_service %} selected {% endif %}>
-                {{ service.name }}
-            </option>
+                <option value="{{ service.id }}">
+                    {{ service.name }}
+                </option>
             {% endfor %}
         </select>
         <button type="submit" class="btn btn-primary"> <i class="bi bi-funnel me-2"></i>Filter</button>
     </form>
 
-    {% if technicians %}
+    {% if page_obj %}
+
     <table class="table table-bordered">
         <thead class="table-dark">
             <tr>
@@ -35,7 +36,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for tech in technicians %}
+            {% for tech in page_obj %}
             <tr>
                 <td style="color: rgb(74, 2, 26);" class="fw-bold">{{ tech.name }}</td>
                 <td>{{ tech.user.email }}</td>
@@ -47,15 +48,15 @@
                 </td>
                 <td>
                     {% if tech.status == 'available' %}
-                        <span class="badge bg-success d-flex align-items-center justify-content-center  p-2">
-                            <i class="bi bi-check-circle-fill me-2"></i>  Available
-                        </span>
+                    <span class="badge bg-success d-flex align-items-center justify-content-center  p-2">
+                        <i class="bi bi-check-circle-fill me-2"></i> Available
+                    </span>
                     {% elif tech.status == 'busy' %}
-                        <span class="badge bg-warning text-dark d-flex align-items-center justify-content-center p-2 ">
-                           <i class="bi bi-wrench-adjustable-circle me-2"></i> Busy
-                        </span>
+                    <span class="badge bg-warning text-dark d-flex align-items-center justify-content-center p-2 ">
+                        <i class="bi bi-wrench-adjustable-circle me-2"></i> Busy
+                    </span>
                     {% else %}
-                        <span class="badge bg-secondary">Unknown</span>
+                    <span class="badge bg-secondary">Unknown</span>
                     {% endif %}
                 </td>
                 <td class="d-flex justify-content-evenly">
@@ -65,79 +66,123 @@
                     <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
                         data-bs-target="#deleteModal{{ tech.id }}"><i class="bi bi-trash-fill"></i></button>
                 </td>
-                <div class="modal fade" id="editModal{{ tech.id }}"  aria-hidden="true">
+                <div class="modal fade" id="editModal{{ tech.id }}" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content rounded-4">
-                        <form method="POST" action="{% url 'technician_edit' tech.id %}">
-                            {% csrf_token %}
-                            <div class="modal-header bg-primary text-white">
-                                <h5 class="modal-title">Edit Technician</h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="mb-2">
-                                <label class="form-label">Name</label>
-                                <input type="text" class="form-control" name="name" value="{{ tech.name }}" required>
+                        <div class="modal-content rounded-4">
+                            <form method="POST" action="{% url 'technician_edit' tech.id %}">
+                                {% csrf_token %}
+                                <div class="modal-header bg-primary text-white">
+                                    <h5 class="modal-title">Edit Technician</h5>
+                                    <button type="button" class="btn-close btn-close-white"
+                                        data-bs-dismiss="modal"></button>
                                 </div>
-                                <div class="mb-2">
-                                <label class="form-label">Phone</label>
-                                <input type="text" class="form-control" name="phone" value="{{ tech.phone }}" required>
+                                <div class="modal-body">
+                                    <div class="mb-2">
+                                        <label class="form-label">Name</label>
+                                        <input type="text" class="form-control" name="name" value="{{ tech.name }}"
+                                            required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Phone</label>
+                                        <input type="text" class="form-control" name="phone" value="{{ tech.phone }}"
+                                            required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Service Types</label>
+                                        <select name="service_types" class="form-select" multiple required>
+                                            {% for s in service_types %}
+                                            <option value="{{ s.id }}" {% if s in tech.service_types.all %}selected{%endif %}>{{ s.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
                                 </div>
-                                <div class="mb-2">
-                                <label class="form-label">Service Types</label>
-                                <select name="service_types" class="form-select" multiple required>
-                                    {% for s in service_types %}
-                                    <option value="{{ s.id }}" {% if s in tech.service_types.all %}selected{% endif %}>{{ s.name }}</option>
-                                    {% endfor %}
-                                </select>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Update</button>
                                 </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" class="btn btn-primary">Update</button>
-                            </div>
-                        </form>
-                    </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
 
-               
 
 
-                <div class="modal fade" id="deleteModal{{ tech.id }}"  aria-hidden="true">
+
+                <div class="modal fade" id="deleteModal{{ tech.id }}" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content rounded-4">
-                        <form method="POST" action="{% url 'technician_delete' tech.id %}">
-                        {% csrf_token %}
-                        <div class="modal-header bg-danger text-white">
-                            <h5 class="modal-title">Delete Technician</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        <div class="modal-content rounded-4">
+                            <form method="POST" action="{% url 'technician_delete' tech.id %}">
+                                {% csrf_token %}
+                                <div class="modal-header bg-danger text-white">
+                                    <h5 class="modal-title">Delete Technician</h5>
+                                    <button type="button" class="btn-close btn-close-white"
+                                        data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Are you sure you want to delete <strong>{{ tech.name }}</strong>?</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                </div>
+                            </form>
                         </div>
-                        <div class="modal-body">
-                            <p>Are you sure you want to delete <strong>{{ tech.name }}</strong>?</p>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-danger">Delete</button>
-                        </div>
-                        </form>
-                    </div>
                     </div>
                 </div>
 
-     
+
             </tr>
             {% endfor %}
         </tbody>
     </table>
+      
+        <div class="d-flex justify-content-center mt-4">
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm">
 
-    
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link text-dark" href="?page={{ page_obj.previous_page_number }}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-left"></i></span></li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if num == page_obj.number %}
+                    <li class="page-item active">
+                        <span class="page-link bg-primary border-0">{{ num }}</span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link text-dark" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link text-dark" href="?page={{ page_obj.next_page_number }}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-right"></i></span></li>
+                    {% endif %}
+
+                </ul>
+            </nav>
+        </div>
+     
+
+
     {% else %}
     <div class="alert alert-info text-center mt-4">No technicians added yet.</div>
     {% endif %}
-
-
-
 
 </div>
 {% endblock %}

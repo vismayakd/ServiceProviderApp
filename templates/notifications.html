@@ -1,0 +1,18 @@
+{% extends 'company_base.html' %}
+
+
+{% block content %}
+<div class="container mt-4">
+  <h4 class="mb-3">Notifications</h4>
+  <div class="list-group">
+    {% for note in notifications %}
+      <div class="list-group-item d-flex justify-content-between align-items-center {% if not note.is_read %}bg-light{% endif %}">
+        <span>{{ note.message }}</span>
+        <small class="text-muted">{{ note.created_at|date:"M d, H:i" }}</small>
+      </div>
+    {% empty %}
+      <p class="text-muted text-center mt-3">No notifications yet.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
